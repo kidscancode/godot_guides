@@ -35,18 +35,22 @@ The `Area2D` node will represent our player.  We are using `Area2D` so that we c
 Change the name of the `Area2D` node to `Player` and save the scene (click Scene -> Save, or press `Meta-s`).
 
 #### Sprite Animation
-The `AnimatedSprite` will handle the animations for our player. Notice that there is a warning symbol next to it.  An `AnimatedSprite` requires a `SpriteFrames` resource, which is a list of the animation(s) it can display. To create one, find the `Frames` property in the Inspector and click `<null>` -> `New SpriteFrames`. Next, in the same location, click `<SpriteFrames>` to open the "Animation Frames" editor window:
+The `AnimatedSprite` will handle the animations for our player. Notice that there is a warning symbol next to it.  An `AnimatedSprite` requires a `SpriteFrames` resource, which is a list of the animation(s) it can display. To create one, find the `Frames` property in the Inspector and click `<null>` -> `New SpriteFrames`. Next, in the same location, click `<SpriteFrames>` to open the "SpriteFrames" editor window:
 
-**!IMG: SPRITEFRAMES WINDOW SCREENSHOT!**
+![SpriteFrames Window](img/spriteframes_window.png)
 
 Finally, add a shape to the `CollisionShape2D`. For this character, a `CapsuleShape2D` gives the best fit:
 
 **!IMG: COLLISION SHAPE SCREENSHOT!**
+![Player Collision](img/player_coll_shape.png)
 
 #### Adding a Script
 
 ## Enemy Scene
 
+#### Node Setup
+
+#### Enemy scripts
 ## Main Scene
 
 Instancing
