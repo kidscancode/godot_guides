@@ -6,7 +6,7 @@ This tutorial will guide you through making your first Godot Engine project. You
 
 The game is called _"Dodge the Creeps"_. Your character must move and avoid the enemies for as long as possible.  Here is a preview of the final result:
 
-**!IMG: GIF PREVIEW!**
+![Preview](img/dodge_preview.gif)
 
 >   **Why 2D?**
 >    Beginners are urged to focus on 2D projects until they have a good understanding of the game development process. 3D games are significantly more complex, so stick to 2D until you feel confident in your ability.
@@ -41,16 +41,119 @@ The `AnimatedSprite` will handle the animations for our player. Notice that ther
 
 Finally, add a shape to the `CollisionShape2D`. For this character, a `CapsuleShape2D` gives the best fit:
 
-**!IMG: COLLISION SHAPE SCREENSHOT!**
 ![Player Collision](img/player_coll_shape.png)
 
-#### Adding a Script
+>   **Tip:** Remember not to scale the CollisionShape! Only use the size handles (red) to adjust the shape!
+
+#### Moving the Player
+
+Now it's time to add a script. Click the `Player` node and click the "Add Script" button:
+![Add Script Button](img/add_script_button.png)
+In the script settings window, you can leave the default settings, just click "Create":
+![Attach Script Window](img/attach_node_window.png)
+
+>   If this is your first time encountering GDScript please read the **!LINK TO GDSCRIPT OVERVIEW!** first.
+
+Start by declaring the member variables this object will need:
+
+```
+extends Area2D
+
+var SPEED = 400  # how fast the player will move (pixels/sec)
+var velocity = Vector2()  # the player's movement vector
+var screensize  # size of the game window
+```
+The `ready()` function is called when a node enters the scene tree, so that's a good time to find the size of the game window:
+
+```
+func _ready():
+    screensize = get_viewport_rect().size
+```
+
+Now we will use the `_process()` function to define what the player will do every frame: check for input, move in the given direction, and play the appropriate animation.
+
+First, we need to check the inputs - is the player pressing a key? For this game, we need 4-directional movement, so there are 4 directions to check.  You can detect whether a key is pressed using `Input.is_action_pressed()`.
+
+```
+func _process(delta):
+    if Input.is_action_pressed("ui_right"):
+        velocity.x = 1
+    elif Input.is_action_pressed("ui_left"):
+        velocity.x = -1
+    if Input.is_action_pressed("ui_down"):
+        velocity.y = 1
+    elif Input.is_action_pressed("ui_up"):
+        velocity.y = -1
+    velocity *= SPEED
+```
+
+However, this results in two problems:
+
+*   If you hold down both "left" and "right" at the same time, the player will move left (because of the order of the `if` statement).
+*   If you hold down both "up" and "right" at the same time (or any other diagonal) the combined `x` and `y` velocity will result in the player moving faster due to the Pythogorean theorem (about 40% faster, in fact).
+
+We can solve both of these problems, as well as reduce the amount of code, by taking advantage of the fact that in GDScript `true/false` values are equivalent to `1/0` and combine the opposite keys to get a resulting direction.
+
+Then, we _normalize_ the velocity, which means we set its _length_ to `1`, and multiply by the desired speed. This means no more fast diagonal movement.
+
+We also check whether the player is moving so we can start/stop the AnimatedSprite animation.
+
+```
+func _process(delta):
+    velocity.x = Input.is_action_pressed("ui_right") \
+                 - Input.is_action_pressed("ui_left")
+    velocity.x = Input.is_action_pressed("ui_down") \
+                 - Input.is_action_pressed("ui_up")
+    if velocity.length() > 0:
+        velocity = velocity.normalized() * speed
+        $Sprite.play()
+    else:
+        $Sprite.stop()
+```
+
+Now that we have a movement direction, we update the player's position and use `clamp()` to prevent it from leaving the screen:
+
+```
+    position += velocity * delta
+    position.x = clamp(position.x, 0, screensize.x)
+    position.y = clamp(position.y, 0, screensize.y)
+```
+
+Click "Play the Edited Scene. (F6)" and confirm you can move the player around the screen in all directions.
+
+#### Choosing Animations
+
+Now that the player can move, we need to change which animation the AnimatedSprite is playing based on direction.  We have a "right" animation, which should be flipped horizontally (using the `flip_h` property) for left movement, and an "up" animation, which should be flipped vertically (`flip_v`) for downward movement.
+
+```
+    if velocity.x != 0:
+        $Sprite.animation = "right"
+        $Sprite.flip_v = false
+        $Sprite.flip_h = velocity.x < 0
+    elif velocity.y != 0:
+        $Sprite.animation = "up"
+        $Sprite.flip_v = velocity.y > 0
+```
 
 ## Enemy Scene
 
+Now it's time to make the enemies our player will have to dodge. Their behavior will be very simple:  Mobs will spawn randomly at the edges of the screen and move in a straight line (in a random direction), then despawn when they go offscreen.
+
+We will build this into a `Mob` scene, which we can then _instance_ to create any number of independent mobs in the game.
+
 #### Node Setup
 
-#### Enemy scripts
+The Mob scene will use the following nodes:
+
+`Mob (Area2D)`
+    - `Sprite (AnimatedSprite)`
+    - `CollisionShape2D`
+    - `Visible (VisibilityNotifier2D)`
+
+#### Enemy Script
+
+Here are the member variables we'll need.
+
 ## Main Scene
 
 Instancing
@@ -59,4 +162,14 @@ Instancing
 
 ## HUD
 
+#### Score Timer
+
+#### Displaying Messages
+
+#### Restarting the Game
+
 ## Finishing Up
+
+#### Sound Effects
+
+#### Particles
