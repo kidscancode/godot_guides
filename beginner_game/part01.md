@@ -19,7 +19,7 @@ Start by launching Godot and making a new project. Then, download the **!LINK TO
 
 #### Organizing the Project
 
-In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `HUD`, which we will combine into the game's `Main` scene.  In a larger project, it might be useful to make folders to hold the various scenes and their scripts, but for this simple game, you can save everything in the root folder, which is called `res:\\`.
+In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `HUD`, which we will combine into the game's `Main` scene.  In a larger project, it might be useful to make folders to hold the various scenes and their scripts, but for this simple game, you can save your scenes and scripts in the root folder, which is called `res:\\`.
 
 ## Player Scene
 
@@ -32,7 +32,10 @@ Add the following nodes to the scene:
 
 The `Area2D` node will represent our player.  We are using `Area2D` so that we can detect other objects colliding (i.e. running into) the player. A more complex physics body is not necessary, since we don't need to worry about bouncing or pushing the player.
 
-Change the name of the `Area2D` node to `Player` and save the scene (click Scene -> Save, or press `Meta-s`).
+Change the name of the `Area2D` node to `Player`, the `AnimatedSprite` to `Sprite` and save the scene (click Scene -> Save, or press `Meta-s`).
+
+>   **A Note on Naming**
+>   In this project, we will be following the Godot Engine naming conventions.  Classes (Nodes) use `CapWords`, variables and functions use `snake_case`, and constants use `ALL_CAPS`.
 
 #### Sprite Animation
 The `AnimatedSprite` will handle the animations for our player. Notice that there is a warning symbol next to it.  An `AnimatedSprite` requires a `SpriteFrames` resource, which is a list of the animation(s) it can display. To create one, find the `Frames` property in the Inspector and click `<null>` -> `New SpriteFrames`. Next, in the same location, click `<SpriteFrames>` to open the "SpriteFrames" editor window:
@@ -135,6 +138,32 @@ Now that the player can move, we need to change which animation the AnimatedSpri
         $Sprite.flip_v = velocity.y > 0
 ```
 
+Play the scene again and check that the animations are correct in each of the directions.
+
+#### Preparing for Collisions
+
+We want the player to detect when it is hit by an enemy, but we haven't made any enemies yet! However, that's OK because we're going to use Godot's _signal_ functionality to make it work.
+
+Add the following at the top of the script (after `extends Area2d`):
+
+```
+signal hit
+```
+
+This defines a custom signal called "hit" that our player will emit (send out) when it is hit.  Now we need to use the Area2D to detect the collision.  Select the `Player` node and click the "Node" tab next to the Inspector to see the list of signals the player can emit:
+
+![Player Signals](img/player_signals.png)
+
+Our custom "hit" signal is there as well! Since our enemies are also going to be Area2D nodes, we want the `area_entered( Object area )` signal - that will be emitted when another area contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.
+
+Godot will automatically create the following function in your player's script, and you can add this code to it:
+
+```
+func _on_Player_area_entered( area ):
+    hide()
+    emit_signal("hit")
+```
+
 ## Enemy Scene
 
 Now it's time to make the enemies our player will have to dodge. Their behavior will be very simple:  Mobs will spawn randomly at the edges of the screen and move in a straight line (in a random direction), then despawn when they go offscreen.
@@ -150,9 +179,77 @@ The Mob scene will use the following nodes:
     - `CollisionShape2D`
     - `Visible (VisibilityNotifier2D)`
 
+Set up the AnimatedSprite like you did for the player. This time, we have 3 animations: "fly", "swim", and "walk". Don't forgetWe'll select one of these randomly so that the mobs will have some variety.
+
+![Mob Animations](img/mob_animations.gif)
+
+Again, add a `CapsuleShape2D` for the Collision and then save the scene and attach a script.
+
 #### Enemy Script
 
-Here are the member variables we'll need.
+Add the following member variables:
+```
+extends Area2D
+
+var MIN_SPEED = 200
+var MAX_SPEED = 250
+var mob_types = ["walk", "swim", "fly"]
+var velocity = Vector2()
+var screensize
+var direction
+```
+
+`MIN_SPEED` and `MAX_SPEED` set the limits for how fast the mobs can go - it would be boring if they were all the same speed.
+
+Now let's look at the rest of the script:
+
+```
+func _ready():
+    screensize = get_viewport_rect().size
+    randomize()
+    $Sprite.animation = mob_types[randi() % mob_types.size()]
+    choose_start_location()
+
+func _process(delta):
+    position += velocity * delta
+
+func choose_start_location():
+    # pick a random screen edge
+	var edge = randi() % 4
+    # based on edge, pick a random spot on that edge
+    # and set the direction to point into the screen
+	if edge == 0:  # top
+		position = Vector2(rand_range(0, screensize.x), 0)
+		direction = PI/2
+	elif edge == 1:  # right
+		position = Vector2(screensize.x, rand_range(0, screensize.y))
+		direction = PI
+	elif edge == 2:  # bottom
+		position = Vector2(rand_range(0, screensize.x), screensize.y)
+		direction = PI * 3/2
+	elif edge == 3:  # left
+		position = Vector2(0, rand_range(0, screensize.y))
+		direction = 0
+    # add some randomness to the direction
+	direction += rand_range(-PI/4, PI/4)
+	# textures are oriented pointing up, so add 90deg
+	rotation = direction + PI/2
+	velocity = Vector2(rand_range(MIN_SPEED, MAX_SPEED), 0).rotated(direction)
+```
+
+>   **A Note on Randomization**
+>   You must use `randomize()` if you want your sequence of "random" numbers to be different every time you run the scene. `randi() % n` is a quick way to get a random integer between `0` and `n-1`.
+
+The last piece is to make the mobs delete themselves when they leave the screen. Connect the `screen_exited()` signal of the `VisibilityNotifier2D` and add this code:
+
+```
+func _on_Visible_screen_exited():
+    queue_free()
+```
+
+Now run the scene and check that you see a single mob spawn and move across the screen. Try it a couple of times to see different mob types.
+
+![Mob Test](img/mob_test.gif)
 
 ## Main Scene
 
