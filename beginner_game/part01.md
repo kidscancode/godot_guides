@@ -162,6 +162,16 @@ Godot will automatically create the following function in your player's script, 
 func _on_Player_area_entered( area ):
     hide()
     emit_signal("hit")
+    monitoring = false
+```
+**!NOTE ABOUT MONITORING!**
+
+The last piece for our player is to add
+```
+func start(pos):
+	position = pos
+	show()
+	monitoring = true
 ```
 
 ## Enemy Scene
@@ -257,7 +267,92 @@ Instancing
     - Player (in GUI)
     - Mobs (in code)
 
+Create a new scene and add a `Node` called `Main`. Click the "Instance" button and select your saved `Player.tscn`.
+
+![Instance a Scene](img/instance_scene.png)
+
+>   See the Beginner's Guide **!LINK TO ENGINE OVERVIEW!** to learn more about instancing.
+
+Now add the following nodes as children of `Main`:
+
+-   `MobTimer (Timer)` - to control how often mobs spawn
+-   `ScoreTimer (Timer)` - to increment the score
+-   `StartTimer (Timer)` - to give a delay before starting
+-   `StartPos (Position2D)` - indicates the player's start position
+
+Set the `Wait Time` property of each of the `Timer` nodes as follows:
+
+-   `MobTimer`: `0.5`
+-   `ScoreTimer`: `1`
+-   `StartTimer`: `2`
+
+In addition, set the `One Shot` property of `StartTimer` to `On` and set `Position` of the `StartPos` node to `(240, 450)`. Now add a script to `Main`.
+
+#### Main Script
+
+```
+extends Node
+
+var Mob = preload("res://Mob.tscn")
+var score
+
+func _ready():
+    $Player.connect("hit", self, "game_over")
+
+func new_game():
+    score = 0
+    $Player.start($StartPos.position)
+    $StartTimer.start()
+
+func game_over():
+    $ScoreTimer.stop()
+    $MobTimer.stop()
+
+func _on_MobTimer_timeout():
+	add_child(Mob.instance())
+
+func _on_StartTimer_timeout():
+	$MobTimer.start()
+	$ScoreTimer.start()
+
+func _on_ScoreTimer_timeout():
+	score += 1
+```
+
 ## HUD
+
+```
+extends CanvasLayer
+
+signal start_game
+
+func _input(event):
+	if event.is_action_pressed("ui_select"):
+		if $StartButton.is_visible():
+			$StartButton.emit_signal("pressed")
+
+func show_message(text):
+	$Message.text = text
+	$Message.show()
+	$MessageTimer.start()
+
+func game_over():
+	show_message("Game Over")
+	yield($MessageTimer, "timeout")
+	$StartButton.show()
+	$Message.text = "Dodge the\nCreeps!"
+	$Message.show()
+
+func update_score(score):
+	$ScoreLabel.text = str(score)
+
+func _on_StartButton_pressed():
+	$StartButton.hide()
+	emit_signal("start_game")
+
+func _on_MessageTimer_timeout():
+	$Message.hide()
+```
 
 #### Score Timer
 
@@ -270,3 +365,5 @@ Instancing
 #### Sound Effects
 
 #### Particles
+
+#### Background
