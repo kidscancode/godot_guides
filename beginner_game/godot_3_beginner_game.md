@@ -28,9 +28,9 @@ In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `H
 #### Node Structure
 Add the following nodes to the scene:
 
-`Area2D`
-    - `AnimatedSprite`
-    - `CollisionShape2D`
+-   `Area2D`
+    -   `AnimatedSprite`
+    -   `CollisionShape2D`
 
 The `Area2D` node will represent our player.  We are using `Area2D` so that we can detect other objects colliding (i.e. running into) the player. A more complex physics body is not necessary, since we don't need to worry about bouncing or pushing the player.
 
