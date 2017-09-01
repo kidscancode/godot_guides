@@ -17,6 +17,8 @@ Start by launching Godot and making a new project. Then, download the **!LINK TO
 
 >   For this tutorial, we will assume you are already familiar with the Godot Engine editor window. If you haven't read the **!LINK TO EDITOR OVERVIEW!**, do so now.
 
+This game will use "portrait" mode, so we need to adjust the size of the game window.  Click on `Project>Project Settings>Display>Window` and set `Width` to `480` and `Height` to `720`.
+
 #### Organizing the Project
 
 In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `HUD`, which we will combine into the game's `Main` scene.  In a larger project, it might be useful to make folders to hold the various scenes and their scripts, but for this simple game, you can save your scenes and scripts in the root folder, which is called `res:\\`.
@@ -52,6 +54,7 @@ Finally, add a shape to the `CollisionShape2D`. For this character, a `CapsuleSh
 
 Now it's time to add a script. Click the `Player` node and click the "Add Script" button:
 ![Add Script Button](img/add_script_button.png)
+
 In the script settings window, you can leave the default settings, just click "Create":
 ![Attach Script Window](img/attach_node_window.png)
 
@@ -166,7 +169,8 @@ func _on_Player_area_entered( area ):
 ```
 **!NOTE ABOUT MONITORING!**
 
-The last piece for our player is to add
+The last piece for our player is to add a function we can call to reset the player for starting a new game.
+
 ```
 func start(pos):
 	position = pos
@@ -198,7 +202,7 @@ Again, add a `CapsuleShape2D` for the Collision and then save the scene and atta
 #### Enemy Script
 
 Add the following member variables:
-```
+```python
 extends Area2D
 
 var MIN_SPEED = 200
@@ -263,11 +267,7 @@ Now run the scene and check that you see a single mob spawn and move across the 
 
 ## Main Scene
 
-Instancing
-    - Player (in GUI)
-    - Mobs (in code)
-
-Create a new scene and add a `Node` called `Main`. Click the "Instance" button and select your saved `Player.tscn`.
+Create a new scene and add a `Node` named `Main`. Click the "Instance" button and select your saved `Player.tscn`.
 
 ![Instance a Scene](img/instance_scene.png)
 
@@ -276,7 +276,7 @@ Create a new scene and add a `Node` called `Main`. Click the "Instance" button a
 Now add the following nodes as children of `Main`:
 
 -   `MobTimer (Timer)` - to control how often mobs spawn
--   `ScoreTimer (Timer)` - to increment the score
+-   `ScoreTimer (Timer)` - to increment the score every second
 -   `StartTimer (Timer)` - to give a delay before starting
 -   `StartPos (Position2D)` - indicates the player's start position
 
@@ -286,7 +286,7 @@ Set the `Wait Time` property of each of the `Timer` nodes as follows:
 -   `ScoreTimer`: `1`
 -   `StartTimer`: `2`
 
-In addition, set the `One Shot` property of `StartTimer` to `On` and set `Position` of the `StartPos` node to `(240, 450)`. Now add a script to `Main`.
+In addition, set the `One Shot` property of `StartTimer` to `On` and set `Position` of the `StartPos` node to `(240, 450)`. Now add a script to `Main` and connect the `timeout()` signal of each of the Timer nodes.
 
 #### Main Script
 
@@ -298,7 +298,10 @@ var score
 
 func _ready():
     $Player.connect("hit", self, "game_over")
+```
+We're connecting the player's `hit` signal to our `game_over` function, which will handle what needs to happen when a game ends. We will also have a `new_game` function to set everything up for a new game:
 
+```
 func new_game():
     score = 0
     $Player.start($StartPos.position)
@@ -307,7 +310,10 @@ func new_game():
 func game_over():
     $ScoreTimer.stop()
     $MobTimer.stop()
+```
 
+Now for the three `timeout()` functions
+```
 func _on_MobTimer_timeout():
 	add_child(Mob.instance())
 
@@ -321,28 +327,100 @@ func _on_ScoreTimer_timeout():
 
 ## HUD
 
+The final piece our game needs is a UI, an interface to display things like score, "game over" message, and a restart button.  Create a new scene, and add a `CanvasLayer` node named `HUD` ("HUD" stands for "heads-up display", meaning an informational display that appears as an overlay, on top of the game view).
+
+The HUD is going to display the following information:
+
+*   Score (based on `ScoreTimer`)
+*   A message (ie "Game Over" or "Get Ready!")
+*   A "Start" button to begin the game
+
+Create the following children fo the `HUD` node:
+
+*   `ScoreLabel (Label)`
+*   `Message (Label)`
+*   `StartButton (Button)`
+*   `MessageTimer (Timer)`
+
+> **Anchors and Margins**
+> `Control` nodes have a position and size, but they also have an anchors and margins. Anchors define the origin, or the reference point for the edges of the node. Margins update automatically when you move or resize a control node. They represent the distance from the control node’s edges to its anchor. See **!LINK TO UI GUIDE!** for more details.
+
+We will arrange the nodes as shown below. Click the "Anchor" button to set a Control node's anchor:
+![Setting Anchor](img/ui_anchor.png)
+
+You can drag the nodes around manually, or for more precise placement, use the following settings:
+
+##### ScoreLabel
+*   `Anchor`: "Center Top"
+*   `Margin`:
+    -   Left: `240`
+    -   Top: `0`
+    -   Right: `-240`
+    -   Bottom: `100`
+*   Text: `0`
+
+##### Message
+*   `Anchor`: "Center"
+*   `Margin`:
+    -   Left: `240`
+    -   Top: `260`
+    -   Right: `-240`
+    -   Bottom: `-60`
+*   Text: `Dodge the Creeps!`
+
+##### StartButton
+*   `Anchor`: "Center"
+*   `Margin`:
+    -   Left: `60`
+    -   Top: `-70`
+    -   Right: `-60`
+    -   Bottom: `-150`
+*   Text: `Start`
+
+Next, we need to change the font. The default font for `Control` nodes is very small and doesn't scale well. There is a font file included in the game assets called "Xolonium-Regular.ttf". To use this font, do the following for each of the three `Control` nodes:
+
+1.  Under "Custom Fonts", choose "New DynamicFont"
+![Choose Custom Font](img/custom_font1.png)
+
+2.  Click on the "DynamicFont" you just added, and under "Font Data", choose "Load" and select the `.ttf` file. You can also set the font's "Size".  A setting of `64` should work well.
+![Choose Custom Font](img/custom_font2.png)
+
+Now add this script to the `HUD`:
 ```
 extends CanvasLayer
 
 signal start_game
+```
+The `start_game` signal will tell the `Main` node that the button has been pressed.
 
+```
 func _input(event):
 	if event.is_action_pressed("ui_select"):
 		if $StartButton.is_visible():
 			$StartButton.emit_signal("pressed")
+```
+The `Button` node has a `pressed()` signal, which is emitted whne the button is clicked. This code will ensure that it also works if the spacebar is pressed.
 
+```
 func show_message(text):
 	$Message.text = text
 	$Message.show()
 	$MessageTimer.start()
+```
+This function will be called when we want to display a message temporarily, such as "Get Ready". On the `MessageTimer`, set the `Wait Time` to `2` and check `One Shot`.
 
-func game_over():
+```
+func show_game_over():
 	show_message("Game Over")
 	yield($MessageTimer, "timeout")
 	$StartButton.show()
 	$Message.text = "Dodge the\nCreeps!"
 	$Message.show()
+```
+We will call this function when the player loses. It will show "Game Over" for 2 seconds, and then return to the game title and show the "Start" button.
 
+The remaining functions should be self-explanatory.
+```
 func update_score(score):
 	$ScoreLabel.text = str(score)
 
@@ -354,16 +432,53 @@ func _on_MessageTimer_timeout():
 	$Message.hide()
 ```
 
-#### Score Timer
+#### Connecting HUD to Main
 
-#### Displaying Messages
+Now we need to connect the `HUD` functionality to our `Main` script. This will only require a few additions:
 
-#### Restarting the Game
+In the `_ready()` function, connect the `start_game` signal to the `new_game()` function.
+
+```
+    $HUD.connect("start_game", self, "new_game")
+```
+
+In `new_game()`, update the score display and show the "Get Ready" message:
+```
+    $HUD.update_score(score)
+	$HUD.show_message("Get Ready")
+```
+
+In `game_over()` we need to call the corresponding `HUD` function:
+```
+    $HUD.show_game_over()
+```
+
+Finally, add this to `_on_ScoreTimer_timeout()` to keep the display in sync with the changing score:
+```
+	$HUD.update_score(score)
+```
 
 ## Finishing Up
-
-#### Sound Effects
-
-#### Particles
+We've now completed all the basic functionality for our game. Follow the remaining steps to add a bit more "juice" and improve the game experience.
 
 #### Background
+The default gray background is not very appealing, so let's change its color. One simple way to do this is to use a `ColorRect` node.  Make it the first node under `Main` so that it will be drawn behind the other nodes. `ColorRect` only has one property: `Color`. Choose a color you like and drag the size of the `ColorRect` so that it covers the screen.
+
+You can also add a background image, if you have one, by using a `Sprite` node instead.
+
+#### Sound Effects
+Sound and music can be the single most effective way to add appeal to the game experience. In your game assets folder, you have two sound files: "House In a Forest Loop.ogg", for background music, and "gameover.wav" for when the player loses.
+
+Add two `AudioStreamPlayer` nodes as children of `Main`. Name one of them `Music` and the other `DeathSound`. On each one, click on the `Stream` property, select "Load" and choose the corresponding audio file.
+
+To play the music, just add `$Music.play()` in the `new_game()` function and `$Music.stop()` in the `game_over()` function.
+
+Finally, add `$DeathSound.play()` in the `game_over()` function as well.
+
+#### Particles
+For one last bit of visual appeal, let's add a trail effect to the player's movement. Choose your `Player` scene and add a `Particles2D` node.
+
+**!IMAGES OF P2D SETTINGS!**
+
+
+You're all done! Congratulations, you now have a fully functional game. Feel free to add your own features and extras.
