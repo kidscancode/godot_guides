@@ -21,7 +21,7 @@ This game will use "portrait" mode, so we need to adjust the size of the game wi
 
 #### Organizing the Project
 
-In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `HUD`, which we will combine into the game's `Main` scene.  In a larger project, it might be useful to make folders to hold the various scenes and their scripts, but for this simple game, you can save your scenes and scripts in the root folder, which is called `res:\\`.
+In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `HUD`, which we will combine into the game's `Main` scene.  In a larger project, it might be useful to make folders to hold the various scenes and their scripts, but for this relatively simple game, you can save your scenes and scripts in the root folder, which is called `res:\\`.
 
 ## Player Scene
 
@@ -43,6 +43,10 @@ Change the name of the `Area2D` node to `Player`, the `AnimatedSprite` to `Sprit
 The `AnimatedSprite` will handle the animations for our player. Notice that there is a warning symbol next to it.  An `AnimatedSprite` requires a `SpriteFrames` resource, which is a list of the animation(s) it can display. To create one, find the `Frames` property in the Inspector and click `<null>` -> `New SpriteFrames`. Next, in the same location, click `<SpriteFrames>` to open the "SpriteFrames" editor window:
 
 ![SpriteFrames Window](img/spriteframes_window.png)
+
+On the left is a list of animations. Click the "default" one and rename it to "right".  Then click the "Add" button to create a second animation named "up". Drag the two images for each animation into "Animation Frames" side of the window:
+
+![SpriteFrames Window 2](img/spriteframes_window2.png)
 
 Finally, add a shape to the `CollisionShape2D`. For this character, a `CapsuleShape2D` gives the best fit:
 
@@ -69,7 +73,7 @@ var SPEED = 400  # how fast the player will move (pixels/sec)
 var velocity = Vector2()  # the player's movement vector
 var screensize  # size of the game window
 ```
-The `ready()` function is called when a node enters the scene tree, so that's a good time to find the size of the game window:
+The `ready()` function is called when a node enters the scene tree (i.e. when the object is created), so that's a good time to find the size of the game window:
 
 ```
 func _ready():
@@ -78,7 +82,7 @@ func _ready():
 
 Now we will use the `_process()` function to define what the player will do every frame: check for input, move in the given direction, and play the appropriate animation.
 
-First, we need to check the inputs - is the player pressing a key? For this game, we need 4-directional movement, so there are 4 directions to check.  You can detect whether a key is pressed using `Input.is_action_pressed()`.
+First, we need to check the inputs - is the player pressing a key? For this game, we need 4-directional movement, so there are 4 directions to check.  You can detect whether a key is pressed using `Input.is_action_pressed()`, which returns `true` or `false`.
 
 ```
 func _process(delta):
@@ -95,10 +99,10 @@ func _process(delta):
 
 However, this results in two problems:
 
-*   If you hold down both "left" and "right" at the same time, the player will move left (because of the order of the `if` statement).
+*   If you hold down both "left" and "right" at the same time, the player will move left (because of the order of the `if` statements).
 *   If you hold down both "up" and "right" at the same time (or any other diagonal) the combined `x` and `y` velocity will result in the player moving faster due to the Pythogorean theorem (about 40% faster, in fact).
 
-We can solve both of these problems, as well as reduce the amount of code, by taking advantage of the fact that in GDScript `true/false` values are equivalent to `1/0` and combine the opposite keys to get a resulting direction.
+We can solve both of these problems, as well as reduce the amount of code, by taking advantage of the fact that in GDScript (and many other languages) `true/false` values are equivalent to `1/0`. We can thus combine the opposite keys to get a resulting direction (`1`, `0`, or `-1`).
 
 Then, we _normalize_ the velocity, which means we set its _length_ to `1`, and multiply by the desired speed. This means no more fast diagonal movement.
 
@@ -124,6 +128,7 @@ Now that we have a movement direction, we update the player's position and use `
     position.x = clamp(position.x, 0, screensize.x)
     position.y = clamp(position.y, 0, screensize.y)
 ```
+>   **Tip:** _Clamping_ a value means restricting it to a given minimum/maximum range.
 
 Click "Play the Edited Scene. (F6)" and confirm you can move the player around the screen in all directions.
 
@@ -157,7 +162,7 @@ This defines a custom signal called "hit" that our player will emit (send out) w
 
 ![Player Signals](img/player_signals.png)
 
-Our custom "hit" signal is there as well! Since our enemies are also going to be Area2D nodes, we want the `area_entered( Object area )` signal - that will be emitted when another area contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.
+Notice our custom "hit" signal is there as well! Since our enemies are also going to be Area2D nodes, we want the `area_entered( Object area )` signal - that will be emitted when another area contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.
 
 Godot will automatically create the following function in your player's script, and you can add this code to it:
 
@@ -168,6 +173,12 @@ func _on_Player_area_entered( area ):
     monitoring = false
 ```
 **!NOTE ABOUT MONITORING!**
+Disabling the `monitoring` property of an `Area2D` means it won't detect collisions. By turning it off, we make sure we don't trigger the `hit` signal more than once.  However, changing the property in the midst of an `area_entered` signal will result in an error.
+
+Change the line to this:
+```
+    call_deferred("set_monitoring", false)
+```
 
 The last piece for our player is to add a function we can call to reset the player for starting a new game.
 
@@ -180,7 +191,7 @@ func start(pos):
 
 ## Enemy Scene
 
-Now it's time to make the enemies our player will have to dodge. Their behavior will be very simple:  Mobs will spawn randomly at the edges of the screen and move in a straight line (in a random direction), then despawn when they go offscreen.
+Now it's time to make the enemies our player will have to dodge. Their behavior will not be very complex:  Mobs will spawn randomly at the edges of the screen and move in a straight line (in a random direction), then despawn when they go offscreen.
 
 We will build this into a `Mob` scene, which we can then _instance_ to create any number of independent mobs in the game.
 
@@ -342,7 +353,7 @@ Create the following children fo the `HUD` node:
 *   `StartButton (Button)`
 *   `MessageTimer (Timer)`
 
-> **Anchors and Margins**
+>   **Anchors and Margins**
 > `Control` nodes have a position and size, but they also have an anchors and margins. Anchors define the origin, or the reference point for the edges of the node. Margins update automatically when you move or resize a control node. They represent the distance from the control node’s edges to its anchor. See **!LINK TO UI GUIDE!** for more details.
 
 We will arrange the nodes as shown below. Click the "Anchor" button to set a Control node's anchor:
@@ -462,7 +473,7 @@ Finally, add this to `_on_ScoreTimer_timeout()` to keep the display in sync with
 We've now completed all the basic functionality for our game. Follow the remaining steps to add a bit more "juice" and improve the game experience.
 
 #### Background
-The default gray background is not very appealing, so let's change its color. One simple way to do this is to use a `ColorRect` node.  Make it the first node under `Main` so that it will be drawn behind the other nodes. `ColorRect` only has one property: `Color`. Choose a color you like and drag the size of the `ColorRect` so that it covers the screen.
+The default gray background is not very appealing, so let's change its color. One way to do this is to use a `ColorRect` node.  Make it the first node under `Main` so that it will be drawn behind the other nodes. `ColorRect` only has one property: `Color`. Choose a color you like and drag the size of the `ColorRect` so that it covers the screen.
 
 You can also add a background image, if you have one, by using a `Sprite` node instead.
 
