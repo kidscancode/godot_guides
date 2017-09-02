@@ -115,7 +115,7 @@ func _process(delta):
     velocity.x = Input.is_action_pressed("ui_down") \
                  - Input.is_action_pressed("ui_up")
     if velocity.length() > 0:
-        velocity = velocity.normalized() * speed
+        velocity = velocity.normalized() * SPEED
         $Sprite.play()
     else:
         $Sprite.stop()
@@ -175,7 +175,7 @@ func _on_Player_area_entered( area ):
 **!NOTE ABOUT MONITORING!**
 Disabling the `monitoring` property of an `Area2D` means it won't detect collisions. By turning it off, we make sure we don't trigger the `hit` signal more than once.  However, changing the property in the midst of an `area_entered` signal will result in an error.
 
-Change the line to this:
+Instead, you can _defer_ the change Change the line to this:
 ```
     call_deferred("set_monitoring", false)
 ```
@@ -191,7 +191,7 @@ func start(pos):
 
 ## Enemy Scene
 
-Now it's time to make the enemies our player will have to dodge. Their behavior will not be very complex:  Mobs will spawn randomly at the edges of the screen and move in a straight line (in a random direction), then despawn when they go offscreen.
+Now it's time to make the enemies our player will have to dodge. Their behavior will not be very complex:  mobs will spawn randomly at the edges of the screen and move in a straight line (in a random direction), then despawn when they go offscreen.
 
 We will build this into a `Mob` scene, which we can then _instance_ to create any number of independent mobs in the game.
 
@@ -204,7 +204,7 @@ The Mob scene will use the following nodes:
     - `CollisionShape2D`
     - `Visible (VisibilityNotifier2D)`
 
-Set up the AnimatedSprite like you did for the player. This time, we have 3 animations: "fly", "swim", and "walk". Don't forgetWe'll select one of these randomly so that the mobs will have some variety.
+Set up the AnimatedSprite like you did for the player. This time, we have 3 animations: "fly", "swim", and "walk". Don't forget to adjust the "Speed (FPS)" setting.  We'll select one of these randomly so that the mobs will have some variety.
 
 ![Mob Animations](img/mob_animations.gif)
 
@@ -213,18 +213,18 @@ Again, add a `CapsuleShape2D` for the Collision and then save the scene and atta
 #### Enemy Script
 
 Add the following member variables:
-```python
+```
 extends Area2D
 
 var MIN_SPEED = 200
 var MAX_SPEED = 250
 var mob_types = ["walk", "swim", "fly"]
-var velocity = Vector2()
-var screensize
+var velocity
 var direction
+var screensize
 ```
 
-`MIN_SPEED` and `MAX_SPEED` set the limits for how fast the mobs can go - it would be boring if they were all the same speed.
+`MIN_SPEED` and `MAX_SPEED` set the limits for how fast the mobs can go - it would be boring if they were all moving at the same speed.
 
 Now let's look at the rest of the script:
 
@@ -237,7 +237,15 @@ func _ready():
 
 func _process(delta):
     position += velocity * delta
+```
+In `_ready()` we get the screensize (for picking a start location on the edges of the screen), and choose a random one of the three animation types.
 
+>   **A Note on Randomization**
+>   You must use `randomize()` if you want your sequence of "random" numbers to be different every time you run the scene. `randi() % n` is a quick way to get a random integer between `0` and `n-1`.
+
+Next we use the `choose_start_location()` function, which we must define. In it, we will pick a random edge of the screen, then a random position on that edge, and set the mob's position and direction.
+
+```
 func choose_start_location():
     # pick a random screen edge
 	var edge = randi() % 4
@@ -262,9 +270,6 @@ func choose_start_location():
 	velocity = Vector2(rand_range(MIN_SPEED, MAX_SPEED), 0).rotated(direction)
 ```
 
->   **A Note on Randomization**
->   You must use `randomize()` if you want your sequence of "random" numbers to be different every time you run the scene. `randi() % n` is a quick way to get a random integer between `0` and `n-1`.
-
 The last piece is to make the mobs delete themselves when they leave the screen. Connect the `screen_exited()` signal of the `VisibilityNotifier2D` and add this code:
 
 ```
@@ -272,13 +277,13 @@ func _on_Visible_screen_exited():
     queue_free()
 ```
 
-Now run the scene and check that you see a single mob spawn and move across the screen. Try it a couple of times to see different mob types.
+Now run the scene and check that you see a single mob spawn and move across the screen. Try it a couple of times to see different mob types and directions.
 
 ![Mob Test](img/mob_test.gif)
 
 ## Main Scene
 
-Create a new scene and add a `Node` named `Main`. Click the "Instance" button and select your saved `Player.tscn`.
+Now it's time to bring it all together.  Create a new scene and add a `Node` named `Main`. Click the "Instance" button and select your saved `Player.tscn`.
 
 ![Instance a Scene](img/instance_scene.png)
 
@@ -289,7 +294,7 @@ Now add the following nodes as children of `Main`:
 -   `MobTimer (Timer)` - to control how often mobs spawn
 -   `ScoreTimer (Timer)` - to increment the score every second
 -   `StartTimer (Timer)` - to give a delay before starting
--   `StartPos (Position2D)` - indicates the player's start position
+-   `StartPos (Position2D)` - to indicate the player's start position
 
 Set the `Wait Time` property of each of the `Timer` nodes as follows:
 
@@ -323,7 +328,7 @@ func game_over():
     $MobTimer.stop()
 ```
 
-Now for the three `timeout()` functions
+Now for the three `timeout()` functions:
 ```
 func _on_MobTimer_timeout():
 	add_child(Mob.instance())
@@ -338,7 +343,7 @@ func _on_ScoreTimer_timeout():
 
 ## HUD
 
-The final piece our game needs is a UI, an interface to display things like score, "game over" message, and a restart button.  Create a new scene, and add a `CanvasLayer` node named `HUD` ("HUD" stands for "heads-up display", meaning an informational display that appears as an overlay, on top of the game view).
+The final piece our game needs is a UI: an interface to display things like score, "game over" message, and a restart button.  Create a new scene, and add a `CanvasLayer` node named `HUD` ("HUD" stands for "heads-up display", meaning an informational display that appears as an overlay, on top of the game view).
 
 The HUD is going to display the following information:
 
@@ -346,7 +351,7 @@ The HUD is going to display the following information:
 *   A message (ie "Game Over" or "Get Ready!")
 *   A "Start" button to begin the game
 
-Create the following children fo the `HUD` node:
+Create the following children of the `HUD` node:
 
 *   `ScoreLabel (Label)`
 *   `Message (Label)`
