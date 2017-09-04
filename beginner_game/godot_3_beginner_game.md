@@ -26,20 +26,19 @@ In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `H
 ## Player Scene
 
 #### Node Structure
-Add the following nodes to the scene:
+To begin, click the "Add/Create a New Node" button and add an `Area2D` node to the scene.
 
--   `Area2D`
-    -   `AnimatedSprite`
-    -   `CollisionShape2D`
+![Add a Node](img/add_node.png)
 
-The `Area2D` node will represent our player.  We are using `Area2D` so that we can detect other objects colliding (i.e. running into) the player. A more complex physics body is not necessary, since we don't need to worry about bouncing or pushing the player.
+We are using `Area2D` so that we can detect other objects overlapping (i.e. running into) the player. This first node will represent the player, and will be the only node that appears in other scenes where the player appears, so change the name of the `Area2D` node to `Player`.  We'll add additional nodes to the player to add functionality.
 
-Change the name of the `Area2D` node to `Player`, the `AnimatedSprite` to `Sprite` and save the scene (click Scene -> Save, or press `Meta-s`).
+Save the scene (click Scene -> Save, or press `Meta-s`).
 
 >   **A Note on Naming**
 >   In this project, we will be following the Godot Engine naming conventions.  Classes (Nodes) use `CapWords`, variables and functions use `snake_case`, and constants use `ALL_CAPS`.
 
 #### Sprite Animation
+Click on the `Player` node and add an `AnimatedSprite` node as a child.
 The `AnimatedSprite` will handle the animations for our player. Notice that there is a warning symbol next to it.  An `AnimatedSprite` requires a `SpriteFrames` resource, which is a list of the animation(s) it can display. To create one, find the `Frames` property in the Inspector and click `<null>` -> `New SpriteFrames`. Next, in the same location, click `<SpriteFrames>` to open the "SpriteFrames" editor window:
 
 ![SpriteFrames Window](img/spriteframes_window.png)
@@ -56,7 +55,7 @@ Finally, add a shape to the `CollisionShape2D`. For this character, a `CapsuleSh
 
 #### Moving the Player
 
-Now it's time to add a script. Click the `Player` node and click the "Add Script" button:
+Now we need to add some functionality that we can't get from a built-in node, so we'll add a script. Click the `Player` node and click the "Add Script" button:
 ![Add Script Button](img/add_script_button.png)
 
 In the script settings window, you can leave the default settings, just click "Create":
@@ -88,11 +87,11 @@ First, we need to check the inputs - is the player pressing a key? For this game
 func _process(delta):
     if Input.is_action_pressed("ui_right"):
         velocity.x = 1
-    elif Input.is_action_pressed("ui_left"):
+    if Input.is_action_pressed("ui_left"):
         velocity.x = -1
     if Input.is_action_pressed("ui_down"):
         velocity.y = 1
-    elif Input.is_action_pressed("ui_up"):
+    if Input.is_action_pressed("ui_up"):
         velocity.y = -1
     velocity *= SPEED
 ```
@@ -100,20 +99,18 @@ func _process(delta):
 However, this results in two problems:
 
 *   If you hold down both "left" and "right" at the same time, the player will move left (because of the order of the `if` statements).
-*   If you hold down both "up" and "right" at the same time (or any other diagonal) the combined `x` and `y` velocity will result in the player moving faster due to the Pythogorean theorem (about 40% faster, in fact).
+*   If you hold down both "up" and "right" at the same time (or any other diagonal) the combined `x` and `y` velocity will result in the player moving faster.
 
-We can solve both of these problems, as well as reduce the amount of code, by taking advantage of the fact that in GDScript (and many other languages) `true/false` values are equivalent to `1/0`. We can thus combine the opposite keys to get a resulting direction (`1`, `0`, or `-1`).
+We can solve the first problem, as well as reduce the amount of code, by taking advantage of the fact that in GDScript (and many other languages) `true/false` values are equivalent to `1/0`. We can thus combine the opposite keys to get a resulting direction (`1`, `0`, or `-1`).
 
-Then, we _normalize_ the velocity, which means we set its _length_ to `1`, and multiply by the desired speed. This means no more fast diagonal movement.
+Then, to ensure that diagonal movement is not faster, we _normalize_ the velocity, which means we set its _length_ to `1`, and multiply by the desired speed. This means no more fast diagonal movement.
 
 We also check whether the player is moving so we can start/stop the AnimatedSprite animation.
 
 ```
 func _process(delta):
-    velocity.x = Input.is_action_pressed("ui_right") \
-                 - Input.is_action_pressed("ui_left")
-    velocity.x = Input.is_action_pressed("ui_down") \
-                 - Input.is_action_pressed("ui_up")
+    velocity.x = Input.is_action_pressed("ui_right") - Input.is_action_pressed("ui_left")
+    velocity.y = Input.is_action_pressed("ui_down") - Input.is_action_pressed("ui_up")
     if velocity.length() > 0:
         velocity = velocity.normalized() * SPEED
         $Sprite.play()
@@ -138,12 +135,12 @@ Now that the player can move, we need to change which animation the AnimatedSpri
 
 ```
     if velocity.x != 0:
-        $Sprite.animation = "right"
-        $Sprite.flip_v = false
-        $Sprite.flip_h = velocity.x < 0
+        $AnimatedSprite.animation = "right"
+        $AnimatedSprite.flip_v = false
+        $AnimatedSprite.flip_h = velocity.x < 0
     elif velocity.y != 0:
-        $Sprite.animation = "up"
-        $Sprite.flip_v = velocity.y > 0
+        $AnimatedSprite.animation = "up"
+        $AnimatedSprite.flip_v = velocity.y > 0
 ```
 
 Play the scene again and check that the animations are correct in each of the directions.
