@@ -162,14 +162,14 @@ This defines a custom signal called "hit" that our player will emit (send out) w
 
 ![Player Signals](img/player_signals.png)
 
-Notice our custom "hit" signal is there as well! Since our enemies are also going to be Area2D nodes, we want the `area_entered( Object area )` signal - that will be emitted when another area contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.  Godot will automatically create a function called `_on_Player_area_entered` in your player's script.
+Notice our custom "hit" signal is there as well! Since our enemies are also going to be Area2D nodes, we want the `body_entered( Object body )` signal - that will be emitted when another area contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.  Godot will automatically create a function called `_on_Player_body_entered` in your player's script.
 
->  **TIP:** When connecting a signal, instead of having Godot create a function for you, you can also name an existing function that you want to link the signal to.
+>   **TIP:** When connecting a signal, instead of having Godot create a function for you, you can also name an existing function that you want to link the signal to.
 
 Add this code to the function:
 
 ```
-func _on_Player_area_entered( area ):
+func _on_Player_body_entered( area ):
     hide()
     emit_signal("hit")
     monitoring = false
@@ -202,10 +202,14 @@ We will build this into a `Mob` scene, which we can then _instance_ to create an
 
 The Mob scene will use the following nodes:
 
-`Mob (Area2D)`
-    - `Sprite (AnimatedSprite)`
+`Mob (RigidBody2D)`
+    - `AnimatedSprite`
     - `CollisionShape2D`
     - `Visible (VisibilityNotifier2D)`
+
+In the `RigidBody2D` settings, set `Gravity Scale` to `0` (so that the mob will not fall downward). In addition, under `PhysicsBody2D`, click the `Mask` property and uncheck the first box.  This will ensure that the mobs do not collide with each other.
+
+![Mob Collision Mask](img/set_collision_mask.png)
 
 Set up the AnimatedSprite like you did for the player. This time, we have 3 animations: "fly", "swim", and "walk". Don't forget to adjust the "Speed (FPS)" setting.  We'll select one of these randomly so that the mobs will have some variety.
 
@@ -217,29 +221,24 @@ Again, add a `CapsuleShape2D` for the Collision and then save the scene and atta
 
 Add the following member variables:
 ```
-extends Area2D
+extends RigidBody2D
 
-var MIN_SPEED = 200
+var MIN_SPEED = 150
 var MAX_SPEED = 250
 var mob_types = ["walk", "swim", "fly"]
-var velocity
 ```
 
 `MIN_SPEED` and `MAX_SPEED` set the limits for how fast the mobs can go - it would be boring if they were all moving at the same speed.
 
-Now let's look at the rest of the script:
+Now let's look at the rest of the script.  In `_ready()` we choose a random one of the three animation types:
 
 ```
 func _ready():
-    $Sprite.animation = mob_types[randi() % mob_types.size()]
-
-func _process(delta):
-    position += velocity * delta
+    $AnimatedSprite.animation = mob_types[randi() % mob_types.size()]
 ```
-In `_ready()` we choose a random one of the three animation types.
 
 >   **A Note on Randomization**
->   You must use `randomize()` if you want your sequence of "random" numbers to be different every time you run the scene. `randi() % n` is a quick way to get a random integer between `0` and `n-1`.
+>   You must use `randomize()` if you want your sequence of "random" numbers to be different every time you run the scene. `randi() % n` is the standard way to get a random integer between `0` and `n-1`.
 
 The last piece is to make the mobs delete themselves when they leave the screen. Connect the `screen_exited()` signal of the `VisibilityNotifier2D` and add this code:
 
@@ -247,10 +246,6 @@ The last piece is to make the mobs delete themselves when they leave the screen.
 func _on_Visible_screen_exited():
     queue_free()
 ```
-
-Now run the scene and check that you see a single mob spawn and move across the screen. Try it a couple of times to see different mob types and directions.
-
-![Mob Test](img/mob_test.gif)
 
 ## Main Scene
 
@@ -277,6 +272,8 @@ In addition, set the `One Shot` property of `StartTimer` to `On` and set `Positi
 
 #### Main Script
 
+At the top of the script we use `export (PackedScene)` to allow us to choose the Mob scene we want to instance.  
+
 ```
 extends Node
 
@@ -287,7 +284,13 @@ func _ready():
     randomize()
 ```
 
-Connect the player's `hit` signal to our `game_over` function, which will handle what needs to happen when a game ends. We will also have a `new_game` function to set everything up for a new game:
+`export` lets you set the value of a variable in the Inspector like so:
+
+![Load a PackedScene](img/load_mob_scene.png)
+
+Click on `<null>` and choose "Load", then select `Mob.tscn`.
+
+Next, click on the Player and connect the `hit` signal to the `game_over` function, which will handle what needs to happen when a game ends. We will also have a `new_game` function to set everything up for a new game:
 
 ```
 func new_game():
@@ -300,7 +303,7 @@ func game_over():
     $MobTimer.stop()
 ```
 
-Now connect the `timeout()` signal of each of the Timer nodes.  `StartTimer` will start the other two timers.  `ScoreTimer` will just increment the score by 1.
+Now connect the `timeout()` signal of each of the Timer nodes.  `StartTimer` will start the other two timers.  `ScoreTimer` will increment the score by 1.
 
 ```
 func _on_StartTimer_timeout():
@@ -311,35 +314,38 @@ func _on_ScoreTimer_timeout():
 	score += 1
 ```
 
- In `_on_MobTimer_timeout()` we will create a mob instance, pick a random starting location on the edge of the screen, and set the mob in motion.
+ In `_on_MobTimer_timeout()` we will create a mob instance, pick a random starting location on the edge of the screen, and set the mob in motion.  Note that a new instance must be added to the scene using `add_child()`.
 
  We'll use the `match` statement to select an appropriate location and direction for whichever screen edge we've randomly chosen.
 
 ```
 func _on_MobTimer_timeout():
 	var mob = Mob.instance()
+    add_child(mob)
     var direction
 	var edge = randi() % 4
 	match edge:
 		0:  # top
 			mob.position = Vector2(rand_range(0, screensize.x), 0)
-			direction = PI/2
+			direction = PI/2  # pointing down (90 degrees)
 		1:  # right
 			mob.position = Vector2(screensize.x, rand_range(0, screensize.y))
-			direction = PI
+			direction = PI  # pointing left (180 degrees)
 		2:  # bottom
 			mob.position = Vector2(rand_range(0, screensize.x), screensize.y)
-			direction = PI * 3/2
+			direction = PI * 3/2  # pointing up (270 degrees)
 		3:  # left
 			mob.position = Vector2(0, rand_range(0, screensize.y))
-			direction = 0
+			direction = 0  # pointing right (0 degrees)
 	# add some randomness to the direction
-	direction += rand_range(-PI/4, PI/4)
-	# textures are oriented pointing up, so add 90deg
+	direction += rand_range(-PI/4, PI/4)  # +/- 45 degrees
+	# textures are oriented pointing up, so add 90 degrees
 	mob.rotation = direction + PI/2
-	mob.velocity = Vector2(rand_range(mob.MIN_SPEED, mob.MAX_SPEED), 0).rotated(direction)
-	add_child(mob)
+	mob.set_linear_velocity(Vector2(rand_range(mob.MIN_SPEED, mob.MAX_SPEED), 0).rotated(direction))
 ```
+
+>   **About angles**
+> In functions requiring angles, GDScript uses _radians_, not degrees.  If you're more comfortable working with degrees, you'll need to use the `deg2rad()` and `rad2deg()` functions to convert between them.
 
 ## HUD
 
