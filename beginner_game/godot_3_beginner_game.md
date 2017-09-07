@@ -4,6 +4,9 @@
 
 This tutorial will guide you through making your first Godot Engine project. You will learn how the Godot Engine editor works, how a project is structured, and how to build a basic 2D game.
 
+>   **Who is this for?**
+>   This project is intended to introduce the Godot Engine. It is assumed that you have some programming experience already. If you're new to programming entirely, it is recommended you start with !**LINK FOR BEGINNER PROGRAMMERS**!
+
 The game is called _"Dodge the Creeps"_. Your character must move and avoid the enemies for as long as possible.  Here is a preview of the final result:
 
 ![Preview](img/dodge_preview.gif)
@@ -159,9 +162,11 @@ This defines a custom signal called "hit" that our player will emit (send out) w
 
 ![Player Signals](img/player_signals.png)
 
-Notice our custom "hit" signal is there as well! Since our enemies are also going to be Area2D nodes, we want the `area_entered( Object area )` signal - that will be emitted when another area contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.
+Notice our custom "hit" signal is there as well! Since our enemies are also going to be Area2D nodes, we want the `area_entered( Object area )` signal - that will be emitted when another area contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.  Godot will automatically create a function called `_on_Player_area_entered` in your player's script.
 
-Godot will automatically create the following function in your player's script, and you can add this code to it:
+>  **TIP:** When connecting a signal, instead of having Godot create a function for you, you can also name an existing function that you want to link the signal to.
+
+Add this code to the function:
 
 ```
 func _on_Player_area_entered( area ):
@@ -169,10 +174,11 @@ func _on_Player_area_entered( area ):
     emit_signal("hit")
     monitoring = false
 ```
+
 **!NOTE ABOUT MONITORING!**
 Disabling the `monitoring` property of an `Area2D` means it won't detect collisions. By turning it off, we make sure we don't trigger the `hit` signal more than once.  However, changing the property in the midst of an `area_entered` signal will result in an error.
 
-Instead, you can _defer_ the change Change the line to this:
+Instead, you can _defer_ the change, which will tell the game engine to wait until it's safe to set monitoring to `false`. Change the line to this:
 ```
     call_deferred("set_monitoring", false)
 ```
@@ -217,8 +223,6 @@ var MIN_SPEED = 200
 var MAX_SPEED = 250
 var mob_types = ["walk", "swim", "fly"]
 var velocity
-var direction
-var screensize
 ```
 
 `MIN_SPEED` and `MAX_SPEED` set the limits for how fast the mobs can go - it would be boring if they were all moving at the same speed.
@@ -227,45 +231,15 @@ Now let's look at the rest of the script:
 
 ```
 func _ready():
-    screensize = get_viewport_rect().size
-    randomize()
     $Sprite.animation = mob_types[randi() % mob_types.size()]
-    choose_start_location()
 
 func _process(delta):
     position += velocity * delta
 ```
-In `_ready()` we get the screensize (for picking a start location on the edges of the screen), and choose a random one of the three animation types.
+In `_ready()` we choose a random one of the three animation types.
 
 >   **A Note on Randomization**
 >   You must use `randomize()` if you want your sequence of "random" numbers to be different every time you run the scene. `randi() % n` is a quick way to get a random integer between `0` and `n-1`.
-
-Next we use the `choose_start_location()` function, which we must define. In it, we will pick a random edge of the screen, then a random position on that edge, and set the mob's position and direction.
-
-```
-func choose_start_location():
-    # pick a random screen edge
-	var edge = randi() % 4
-    # based on edge, pick a random spot on that edge
-    # and set the direction to point into the screen
-	if edge == 0:  # top
-		position = Vector2(rand_range(0, screensize.x), 0)
-		direction = PI/2
-	elif edge == 1:  # right
-		position = Vector2(screensize.x, rand_range(0, screensize.y))
-		direction = PI
-	elif edge == 2:  # bottom
-		position = Vector2(rand_range(0, screensize.x), screensize.y)
-		direction = PI * 3/2
-	elif edge == 3:  # left
-		position = Vector2(0, rand_range(0, screensize.y))
-		direction = 0
-    # add some randomness to the direction
-	direction += rand_range(-PI/4, PI/4)
-	# textures are oriented pointing up, so add 90deg
-	rotation = direction + PI/2
-	velocity = Vector2(rand_range(MIN_SPEED, MAX_SPEED), 0).rotated(direction)
-```
 
 The last piece is to make the mobs delete themselves when they leave the screen. Connect the `screen_exited()` signal of the `VisibilityNotifier2D` and add this code:
 
@@ -299,20 +273,21 @@ Set the `Wait Time` property of each of the `Timer` nodes as follows:
 -   `ScoreTimer`: `1`
 -   `StartTimer`: `2`
 
-In addition, set the `One Shot` property of `StartTimer` to `On` and set `Position` of the `StartPos` node to `(240, 450)`. Now add a script to `Main` and connect the `timeout()` signal of each of the Timer nodes.
+In addition, set the `One Shot` property of `StartTimer` to `On` and set `Position` of the `StartPos` node to `(240, 450)`. Now add a script to `Main`.
 
 #### Main Script
 
 ```
 extends Node
 
-var Mob = preload("res://Mob.tscn")
+export (PackedScene) var Mob
 var score
 
 func _ready():
-    $Player.connect("hit", self, "game_over")
+    randomize()
 ```
-We're connecting the player's `hit` signal to our `game_over` function, which will handle what needs to happen when a game ends. We will also have a `new_game` function to set everything up for a new game:
+
+Connect the player's `hit` signal to our `game_over` function, which will handle what needs to happen when a game ends. We will also have a `new_game` function to set everything up for a new game:
 
 ```
 func new_game():
@@ -325,17 +300,45 @@ func game_over():
     $MobTimer.stop()
 ```
 
-Now for the three `timeout()` functions:
-```
-func _on_MobTimer_timeout():
-	add_child(Mob.instance())
+Now connect the `timeout()` signal of each of the Timer nodes.  `StartTimer` will start the other two timers.  `ScoreTimer` will just increment the score by 1.
 
+```
 func _on_StartTimer_timeout():
 	$MobTimer.start()
 	$ScoreTimer.start()
 
 func _on_ScoreTimer_timeout():
 	score += 1
+```
+
+ In `_on_MobTimer_timeout()` we will create a mob instance, pick a random starting location on the edge of the screen, and set the mob in motion.
+
+ We'll use the `match` statement to select an appropriate location and direction for whichever screen edge we've randomly chosen.
+
+```
+func _on_MobTimer_timeout():
+	var mob = Mob.instance()
+    var direction
+	var edge = randi() % 4
+	match edge:
+		0:  # top
+			mob.position = Vector2(rand_range(0, screensize.x), 0)
+			direction = PI/2
+		1:  # right
+			mob.position = Vector2(screensize.x, rand_range(0, screensize.y))
+			direction = PI
+		2:  # bottom
+			mob.position = Vector2(rand_range(0, screensize.x), screensize.y)
+			direction = PI * 3/2
+		3:  # left
+			mob.position = Vector2(0, rand_range(0, screensize.y))
+			direction = 0
+	# add some randomness to the direction
+	direction += rand_range(-PI/4, PI/4)
+	# textures are oriented pointing up, so add 90deg
+	mob.rotation = direction + PI/2
+	mob.velocity = Vector2(rand_range(mob.MIN_SPEED, mob.MAX_SPEED), 0).rotated(direction)
+	add_child(mob)
 ```
 
 ## HUD
@@ -351,7 +354,7 @@ The HUD is going to display the following information:
 Create the following children of the `HUD` node:
 
 *   `ScoreLabel (Label)`
-*   `Message (Label)`
+*   `MessageLabel (Label)`
 *   `StartButton (Button)`
 *   `MessageTimer (Timer)`
 
@@ -372,7 +375,7 @@ You can drag the nodes around manually, or for more precise placement, use the f
     -   Bottom: `100`
 *   Text: `0`
 
-##### Message
+##### MessageLabel
 *   `Anchor`: "Center"
 *   `Margin`:
     -   Left: `240`
@@ -407,19 +410,12 @@ signal start_game
 The `start_game` signal will tell the `Main` node that the button has been pressed.
 
 ```
-func _input(event):
-	if event.is_action_pressed("ui_select"):
-		if $StartButton.is_visible():
-			$StartButton.emit_signal("pressed")
-```
-The `Button` node has a `pressed()` signal, which is emitted whne the button is clicked. This code will ensure that it also works if the spacebar is pressed.
-
-```
 func show_message(text):
-	$Message.text = text
-	$Message.show()
+	$MessageLabel.text = text
+	$MessageLabel.show()
 	$MessageTimer.start()
 ```
+
 This function will be called when we want to display a message temporarily, such as "Get Ready". On the `MessageTimer`, set the `Wait Time` to `2` and check `One Shot`.
 
 ```
@@ -427,9 +423,10 @@ func show_game_over():
 	show_message("Game Over")
 	yield($MessageTimer, "timeout")
 	$StartButton.show()
-	$Message.text = "Dodge the\nCreeps!"
-	$Message.show()
+	$MessageLabel.text = "Dodge the\nCreeps!"
+	$MessageLabel.show()
 ```
+
 We will call this function when the player loses. It will show "Game Over" for 2 seconds, and then return to the game title and show the "Start" button.
 
 The remaining functions should be self-explanatory.
@@ -442,18 +439,14 @@ func _on_StartButton_pressed():
 	emit_signal("start_game")
 
 func _on_MessageTimer_timeout():
-	$Message.hide()
+	$MessageLabel.hide()
 ```
 
 #### Connecting HUD to Main
 
 Now we need to connect the `HUD` functionality to our `Main` script. This will only require a few additions:
 
-In the `_ready()` function, connect the `start_game` signal to the `new_game()` function.
-
-```
-    $HUD.connect("start_game", self, "new_game")
-```
+In the Node tab, connect the HUD's `start_game` signal to the `new_game()` function.
 
 In `new_game()`, update the score display and show the "Get Ready" message:
 ```
