@@ -2,7 +2,7 @@
 
 ## Overview
 
-This tutorial will guide you through making your first Godot Engine project. You will learn how the Godot Engine editor works, how a project is structured, and how to build a basic 2D game.
+This tutorial will guide you through making your first Godot Engine project. You will learn how the Godot Engine editor works, how a project is structured, and how to build a 2D game.
 
 >   **Who is this for?**
 >   This project is intended to introduce the Godot Engine. It is assumed that you have some programming experience already. If you're new to programming entirely, it is recommended you start with !**LINK FOR BEGINNER PROGRAMMERS**!
@@ -24,7 +24,7 @@ This game will use "portrait" mode, so we need to adjust the size of the game wi
 
 #### Organizing the Project
 
-In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `HUD`, which we will combine into the game's `Main` scene.  In a larger project, it might be useful to make folders to hold the various scenes and their scripts, but for this relatively simple game, you can save your scenes and scripts in the root folder, which is called `res:\\`.
+In this project, we will be making 3 independent scenes: `Player`, `Mob`, and `HUD`, which we will combine into the game's `Main` scene.  In a larger project, it might be useful to make folders to hold the various scenes and their scripts, but for this relatively small game, you can save your scenes and scripts in the root folder, which is called `res:\\`.
 
 ## Player Scene
 
@@ -150,7 +150,7 @@ Play the scene again and check that the animations are correct in each of the di
 
 #### Preparing for Collisions
 
-We want the player to detect when it is hit by an enemy, but we haven't made any enemies yet! However, that's OK because we're going to use Godot's _signal_ functionality to make it work.
+We want the player to detect when it is hit by an enemy, but we haven't made any enemies yet! That's OK because we're going to use Godot's _signal_ functionality to make it work.
 
 Add the following at the top of the script (after `extends Area2d`):
 
@@ -471,7 +471,7 @@ Finally, add this to `_on_ScoreTimer_timeout()` to keep the display in sync with
 ```
 
 ## Finishing Up
-We've now completed all the basic functionality for our game. Follow the remaining steps to add a bit more "juice" and improve the game experience.
+We've now completed all the functionality for our game. Follow the remaining steps to add a bit more "juice" and improve the game experience.
 
 #### Background
 The default gray background is not very appealing, so let's change its color. One way to do this is to use a `ColorRect` node.  Make it the first node under `Main` so that it will be drawn behind the other nodes. `ColorRect` only has one property: `Color`. Choose a color you like and drag the size of the `ColorRect` so that it covers the screen.
