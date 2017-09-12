@@ -270,6 +270,20 @@ Set the `Wait Time` property of each of the `Timer` nodes as follows:
 
 In addition, set the `One Shot` property of `StartTimer` to `On` and set `Position` of the `StartPos` node to `(240, 450)`. Now add a script to `Main`.
 
+#### Spawning Mobs
+
+The Main node will be spawning new mobs, and we want them to appear at a random location on the edge of the screen. Add a `Path2D` named `MobPath` as a child of `Main`. When you select the `Path2D` node you will see some new buttons appear at the top of the window:
+
+![Instance a Scene](img/path2d_buttons.png)
+
+Select the middle one ("Add Point") and draw the path by clicking to add the following points. **Important:** draw the path in _clockwise_ order, or your mobs will spawn pointing _outwards_ instead of _inwards_!
+
+![Instance a Scene](img/draw_path2d.png)
+
+Now that the path is defined, add a `PathFollow2D` node as a child of `MobPath` and name it `MobSpawnLocation`. This node will automatically follow the path you've drawn, so we can use it to select a random position along the path.
+
+Now add a script to `Main`.
+
 #### Main Script
 
 At the top of the script we use `export (PackedScene)` to allow us to choose the Mob scene we want to instance.  
@@ -284,7 +298,7 @@ func _ready():
     randomize()
 ```
 
-`export` lets you set the value of a variable in the Inspector like so:
+Using `export` lets you set the value of a variable in the Inspector like so:
 
 ![Load a PackedScene](img/load_mob_scene.png)
 
@@ -314,34 +328,23 @@ func _on_ScoreTimer_timeout():
 	score += 1
 ```
 
- In `_on_MobTimer_timeout()` we will create a mob instance, pick a random starting location on the edge of the screen, and set the mob in motion.  Note that a new instance must be added to the scene using `add_child()`.
-
- We'll use the `match` statement to select an appropriate location and direction for whichever screen edge we've randomly chosen.
+In `_on_MobTimer_timeout()` we will create a mob instance, pick a random starting location on the edge of the screen, and set the mob in motion. The `PathFollow2D` node will automatically rotate as it follows the path, so we will use that to select the mob's direction.
+ 
+Note that a new instance must be added to the scene using `add_child()`.
 
 ```
 func _on_MobTimer_timeout():
-	var mob = Mob.instance()
-    add_child(mob)
-    var direction
-	var edge = randi() % 4
-	match edge:
-		0:  # top
-			mob.position = Vector2(rand_range(0, screensize.x), 0)
-			direction = PI/2  # pointing down (90 degrees)
-		1:  # right
-			mob.position = Vector2(screensize.x, rand_range(0, screensize.y))
-			direction = PI  # pointing left (180 degrees)
-		2:  # bottom
-			mob.position = Vector2(rand_range(0, screensize.x), screensize.y)
-			direction = PI * 3/2  # pointing up (270 degrees)
-		3:  # left
-			mob.position = Vector2(0, rand_range(0, screensize.y))
-			direction = 0  # pointing right (0 degrees)
-	# add some randomness to the direction
-	direction += rand_range(-PI/4, PI/4)  # +/- 45 degrees
-	# textures are oriented pointing up, so add 90 degrees
-	mob.rotation = direction + PI/2
-	mob.set_linear_velocity(Vector2(rand_range(mob.MIN_SPEED, mob.MAX_SPEED), 0).rotated(direction))
+        # choose a random location on the Path2D
+        $"MobPath/MobSpawnLocation".set_offset(randi())
+        var mob = Mob.instance()
+        add_child(mob)
+        var direction = $"MobPath/MobSpawnLocation".rotation
+        mob.position = $"MobPath/MobSpawnLocation".position
+        # add some randomness to the direction
+        direction += rand_range(-PI/4, PI/4)
+        # textures are oriented pointing up, so add 90deg
+        mob.rotation = direction + PI/2
+        mob.set_linear_velocity(Vector2(rand_range(mob.MIN_SPEED, mob.MAX_SPEED), 0).rotated(direction))
 ```
 
 >   **About angles**
@@ -349,7 +352,7 @@ func _on_MobTimer_timeout():
 
 ## HUD
 
-The final piece our game needs is a UI: an interface to display things like score, "game over" message, and a restart button.  Create a new scene, and add a `CanvasLayer` node named `HUD` ("HUD" stands for "heads-up display", meaning an informational display that appears as an overlay, on top of the game view).
+The final piece our game needs is a UI: an interface to display things like score, a "game over" message, and a restart button.  Create a new scene, and add a `CanvasLayer` node named `HUD` ("HUD" stands for "heads-up display", meaning an informational display that appears as an overlay, on top of the game view).
 
 The HUD is going to display the following information:
 
