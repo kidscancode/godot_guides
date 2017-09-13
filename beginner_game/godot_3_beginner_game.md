@@ -252,7 +252,7 @@ Now it's time to bring it all together.  Create a new scene and add a `Node` nam
 
 >   See the Beginner's Guide **!LINK TO ENGINE OVERVIEW!** to learn more about instancing.
 
-Now add the following nodes as children of `Main`:
+Now add the following nodes as children of `Main`, and name them as shown (values are in seconds):
 
 -   `MobTimer (Timer)` - to control how often mobs spawn
 -   `ScoreTimer (Timer)` - to increment the score every second
@@ -265,25 +265,23 @@ Set the `Wait Time` property of each of the `Timer` nodes as follows:
 -   `ScoreTimer`: `1`
 -   `StartTimer`: `2`
 
-In addition, set the `One Shot` property of `StartTimer` to `On` and set `Position` of the `StartPos` node to `(240, 450)`. Now add a script to `Main`.
+In addition, set the `One Shot` property of `StartTimer` to "On" and set `Position` of the `StartPos` node to `(240, 450)`. Now add a script to `Main`.
 
 #### Spawning Mobs
 
-The Main node will be spawning new mobs, and we want them to appear at a random location on the edge of the screen. Add a `Path2D` named `MobPath` as a child of `Main`. When you select the `Path2D` node you will see some new buttons appear at the top of the window:
+The Main node will be spawning new mobs, and we want them to appear at a random location on the edge of the screen. Add a `Path2D` named `MobPath` as a child of `Main`. When you select the `Path2D` node you will see some new buttons appear at the top of the editor:
 
 ![Instance a Scene](img/path2d_buttons.png)
 
-Select the middle one ("Add Point") and draw the path by clicking to add the following points. **Important:** draw the path in _clockwise_ order, or your mobs will spawn pointing _outwards_ instead of _inwards_!
+Select the middle one ("Add Point") and draw the path by clicking to add the points shown. **Important:** draw the path in _clockwise_ order, or your mobs will spawn pointing _outwards_ instead of _inwards_!
 
 ![Instance a Scene](img/draw_path2d.png)
 
-Now that the path is defined, add a `PathFollow2D` node as a child of `MobPath` and name it `MobSpawnLocation`. This node will automatically follow the path you've drawn, so we can use it to select a random position along the path.
-
-Now add a script to `Main`.
+Now that the path is defined, add a `PathFollow2D` node as a child of `MobPath` and name it `MobSpawnLocation`. This node will automatically rotate and follow the path you've drawn, so we can use it to select a random position and direction along the path.
 
 #### Main Script
 
-At the top of the script we use `export (PackedScene)` to allow us to choose the Mob scene we want to instance.  
+Add a script to `Main`. At the top of the script we use `export (PackedScene)` to allow us to choose the Mob scene we want to instance.  
 
 ```
 extends Node
@@ -331,21 +329,24 @@ Note that a new instance must be added to the scene using `add_child()`.
 
 ```
 func _on_MobTimer_timeout():
-        # choose a random location on the Path2D
-        $"MobPath/MobSpawnLocation".set_offset(randi())
-        var mob = Mob.instance()
-        add_child(mob)
-        var direction = $"MobPath/MobSpawnLocation".rotation
-        mob.position = $"MobPath/MobSpawnLocation".position
-        # add some randomness to the direction
-        direction += rand_range(-PI/4, PI/4)
-        # textures are oriented pointing up, so add 90deg
-        mob.rotation = direction + PI/2
-        mob.set_linear_velocity(Vector2(rand_range(mob.MIN_SPEED, mob.MAX_SPEED), 0).rotated(direction))
+    # choose a random location on the Path2D
+    $"MobPath/MobSpawnLocation".set_offset(randi())
+    # create a Mob instance and add it to the scene
+    var mob = Mob.instance()
+    add_child(mob)
+    # choose a direction and position
+    var direction = $"MobPath/MobSpawnLocation".rotation
+    mob.position = $"MobPath/MobSpawnLocation".position
+    # add some randomness to the direction
+    direction += rand_range(-PI/4, PI/4)
+    # textures are oriented pointing up, so add 90 degrees
+    mob.rotation = direction + PI/2
+    # choose the velocity
+    mob.set_linear_velocity(Vector2(rand_range(mob.MIN_SPEED, mob.MAX_SPEED), 0).rotated(direction))
 ```
 
 >   **About angles**
-> In functions requiring angles, GDScript uses _radians_, not degrees.  If you're more comfortable working with degrees, you'll need to use the `deg2rad()` and `rad2deg()` functions to convert between them.
+> In functions requiring angles, GDScript uses _radians_, not degrees.  If you're more comfortable working with degrees, you'll need to use the `deg2rad()` and `rad2deg()` functions to convert between the two measures.
 
 ## HUD
 
