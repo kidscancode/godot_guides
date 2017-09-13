@@ -354,7 +354,7 @@ The final piece our game needs is a UI: an interface to display things like scor
 
 The HUD is going to display the following information:
 
-*   Score (based on `ScoreTimer`)
+*   Score (changed by `ScoreTimer`)
 *   A message (ie "Game Over" or "Get Ready!")
 *   A "Start" button to begin the game
 
@@ -371,7 +371,7 @@ Create the following children of the `HUD` node:
 We will arrange the nodes as shown below. Click the "Anchor" button to set a Control node's anchor:
 ![Setting Anchor](img/ui_anchor.png)
 
-You can drag the nodes around manually, or for more precise placement, use the following settings:
+You can drag the nodes to place them manually, or for more precise placement, use the following settings:
 
 ##### ScoreLabel
 *   `Anchor`: "Center Top"
@@ -400,12 +400,12 @@ You can drag the nodes around manually, or for more precise placement, use the f
     -   Bottom: `-150`
 *   Text: `Start`
 
-Next, we need to change the font. The default font for `Control` nodes is very small and doesn't scale well. There is a font file included in the game assets called "Xolonium-Regular.ttf". To use this font, do the following for each of the three `Control` nodes:
+The default font for `Control` nodes is very small and doesn't scale well. There is a font file included in the game assets called "Xolonium-Regular.ttf". To use this font, do the following for each of the three `Control` nodes:
 
 1.  Under "Custom Fonts", choose "New DynamicFont"
 ![Choose Custom Font](img/custom_font1.png)
 
-2.  Click on the "DynamicFont" you just added, and under "Font Data", choose "Load" and select the `.ttf` file. You can also set the font's "Size".  A setting of `64` should work well.
+2.  Click on the "DynamicFont" you just added, and under "Font Data", choose "Load" and select the "Xolonium-Regular.ttf" file. You must also set the font's `Size`.  A setting of `64` works well.
 ![Choose Custom Font](img/custom_font2.png)
 
 Now add this script to the `HUD`:
@@ -435,12 +435,15 @@ func show_game_over():
 ```
 
 We will call this function when the player loses. It will show "Game Over" for 2 seconds, and then return to the game title and show the "Start" button.
-
-The remaining functions should be self-explanatory.
 ```
 func update_score(score):
-	$ScoreLabel.text = str(score)
+    $ScoreLabel.text = str(score)
+```
 
+We will call this function in `Main` whenever the score changes.
+
+Connect the `timout()` signal of `MessageTimer` and the `pressed()` signal of `StartButton`.
+```
 func _on_StartButton_pressed():
 	$StartButton.hide()
 	emit_signal("start_game")
@@ -451,7 +454,7 @@ func _on_MessageTimer_timeout():
 
 #### Connecting HUD to Main
 
-Now we need to connect the `HUD` functionality to our `Main` script. This will only require a few additions:
+Now we need to connect the `HUD` functionality to our `Main` script. This require a few additions to the `Main` scene:
 
 In the Node tab, connect the HUD's `start_game` signal to the `new_game()` function.
 
