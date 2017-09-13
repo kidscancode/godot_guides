@@ -33,7 +33,7 @@ To begin, click the "Add/Create a New Node" button and add an `Area2D` node to t
 
 ![Add a Node](img/add_node.png)
 
-We are using `Area2D` so that we can detect other objects overlapping (i.e. running into) the player. This first node will represent the player, and will be the only node that appears in other scenes where the player appears, so change the name of the `Area2D` node to `Player`.  We'll add additional nodes to the player to add functionality.
+We are using `Area2D` so that we can detect other objects overlapping (i.e. running into) the player. This first node will represent the player, so change its name to `Player`.  We'll add additional nodes to the player to add functionality.
 
 Save the scene (click Scene -> Save, or press `Meta-s`).
 
@@ -42,7 +42,7 @@ Save the scene (click Scene -> Save, or press `Meta-s`).
 
 #### Sprite Animation
 Click on the `Player` node and add an `AnimatedSprite` node as a child.
-The `AnimatedSprite` will handle the animations for our player. Notice that there is a warning symbol next to it.  An `AnimatedSprite` requires a `SpriteFrames` resource, which is a list of the animation(s) it can display. To create one, find the `Frames` property in the Inspector and click `<null>` -> `New SpriteFrames`. Next, in the same location, click `<SpriteFrames>` to open the "SpriteFrames" editor window:
+The `AnimatedSprite` will handle the appearance and animations for our player. Notice that there is a warning symbol next to the node.  An `AnimatedSprite` requires a `SpriteFrames` resource, which is a list of the animation(s) it can display. To create one, find the `Frames` property in the Inspector and click `<null>` -> `New SpriteFrames`. Next, in the same location, click `<SpriteFrames>` to open the "SpriteFrames" editor window:
 
 ![SpriteFrames Window](img/spriteframes_window.png)
 
@@ -50,11 +50,15 @@ On the left is a list of animations. Click the "default" one and rename it to "r
 
 ![SpriteFrames Window 2](img/spriteframes_window2.png)
 
-Finally, add a shape to the `CollisionShape2D`. For this character, a `CapsuleShape2D` gives the best fit:
+Finally, add a `CollisionShape2D` as a child of the `Player`. This will determine the player's "hitbox" (the bounds of its collision area). For this character, a `CapsuleShape2D` gives the best fit, so next to "Shape" in the Inspector, click `<null>` -> "New CapsuleShape2D".  Resize the shape to cover the sprite:
 
 ![Player Collision](img/player_coll_shape.png)
 
->   **Tip:** Remember not to scale the CollisionShape! Only use the size handles (red) to adjust the shape!
+>   **Tip:** Remember not to scale the shape's outline! Only use the size handles (red) to adjust the shape!
+
+When you're finished, your `Player` scene should look like this:
+
+![Player Scene](img/player_scene_nodes.png)
 
 #### Moving the Player
 
@@ -82,44 +86,37 @@ func _ready():
     screensize = get_viewport_rect().size
 ```
 
-Now we will use the `_process()` function to define what the player will do every frame: check for input, move in the given direction, and play the appropriate animation.
+Now we will use the `_process()` function to define what the player will do every frame: 
+-   check for input
+-   move in the given direction
+-   play the appropriate animation.
 
-First, we need to check the inputs - is the player pressing a key? For this game, we need 4-directional movement, so there are 4 directions to check.  You can detect whether a key is pressed using `Input.is_action_pressed()`, which returns `true` or `false`.
+First, we need to check the inputs - is the player pressing a key? For this game, we need 8-directional movement, so there are 4 direction inputs to check.  Input actions are defined in the Project Settings under "Input Map". You can define custom events and assign different keys, mouse events, or other inputs to them.  For this demo, we will use the default events that are assigned to the arrow keys on the keyboard.
 
-```
-func _process(delta):
-    if Input.is_action_pressed("ui_right"):
-        velocity.x = 1
-    if Input.is_action_pressed("ui_left"):
-        velocity.x = -1
-    if Input.is_action_pressed("ui_down"):
-        velocity.y = 1
-    if Input.is_action_pressed("ui_up"):
-        velocity.y = -1
-    velocity *= SPEED
-```
-
-However, this results in two problems:
-
-*   If you hold down both "left" and "right" at the same time, the player will move left (because of the order of the `if` statements).
-*   If you hold down both "up" and "right" at the same time (or any other diagonal) the combined `x` and `y` velocity will result in the player moving faster.
-
-We can solve the first problem, as well as reduce the amount of code, by taking advantage of the fact that in GDScript (and many other languages) `true/false` values are equivalent to `1/0`. We can thus combine the opposite keys to get a resulting direction (`1`, `0`, or `-1`).
-
-Then, to ensure that diagonal movement is not faster, we _normalize_ the velocity, which means we set its _length_ to `1`, and multiply by the desired speed. This means no more fast diagonal movement.
-
-We also check whether the player is moving so we can start/stop the AnimatedSprite animation.
+You can detect whether a key is pressed using `Input.is_action_pressed()`, which returns `true` if it is pressed or `false` if it isn't.
 
 ```
 func _process(delta):
-    velocity.x = Input.is_action_pressed("ui_right") - Input.is_action_pressed("ui_left")
-    velocity.y = Input.is_action_pressed("ui_down") - Input.is_action_pressed("ui_up")
-    if velocity.length() > 0:
-        velocity = velocity.normalized() * SPEED
-        $Sprite.play()
-    else:
-        $Sprite.stop()
+	velocity = Vector2()
+	if Input.is_action_pressed("ui_right"):
+		velocity.x += 1
+	if Input.is_action_pressed("ui_left"):
+		velocity.x -= 1
+	if Input.is_action_pressed("ui_down"):
+		velocity.y += 1
+	if Input.is_action_pressed("ui_up"):
+		velocity.y -= 1
+	if velocity.length() > 0:
+		velocity = velocity.normalized() * SPEED
+        $AnimatedSprite.play()
+	else:
+		$AnimatedSprite.stop()
 ```
+We check each input and add/subtract from the `velocity` to obtain a total direction. For example, if you hold down `right` and `down` at the same time, the resulting `velocity` vector will be `(1, 1)`. In this case, since we're adding a horizontal and a vertical movement, the player would move _faster_ than if it just moved horizontally.
+
+We can prevent that if we _normalize_ the velocity, which means we set its _length_ to `1`, and multiply by the desired speed. This means no more fast diagonal movement.
+
+We also check whether the player is moving so we can start or stop the AnimatedSprite animation.
 
 Now that we have a movement direction, we update the player's position and use `clamp()` to prevent it from leaving the screen:
 
@@ -158,11 +155,11 @@ Add the following at the top of the script (after `extends Area2d`):
 signal hit
 ```
 
-This defines a custom signal called "hit" that our player will emit (send out) when it is hit.  Now we need to use the Area2D to detect the collision.  Select the `Player` node and click the "Node" tab next to the Inspector to see the list of signals the player can emit:
+This defines a custom signal called "hit" that we will have our player emit (send out) when it is hit.  We will use the Area2D to detect the collision.  Select the `Player` node and click the "Node" tab next to the Inspector to see the list of signals the player can emit:
 
 ![Player Signals](img/player_signals.png)
 
-Notice our custom "hit" signal is there as well! Since our enemies are also going to be Area2D nodes, we want the `body_entered( Object body )` signal - that will be emitted when another area contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.  Godot will automatically create a function called `_on_Player_body_entered` in your player's script.
+Notice our custom "hit" signal is there as well! Since our enemies are going to be `RigidBody2D` nodes, we want the `body_entered( Object body )` signal - that will be emitted when a body contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.  Godot will automatically create a function called `_on_Player_body_entered` in your player's script.
 
 >   **TIP:** When connecting a signal, instead of having Godot create a function for you, you can also name an existing function that you want to link the signal to.
 
@@ -176,7 +173,7 @@ func _on_Player_body_entered( area ):
 ```
 
 **!NOTE ABOUT MONITORING!**
-Disabling the `monitoring` property of an `Area2D` means it won't detect collisions. By turning it off, we make sure we don't trigger the `hit` signal more than once.  However, changing the property in the midst of an `area_entered` signal will result in an error.
+Disabling the `monitoring` property of an `Area2D` means it won't detect collisions. By turning it off, we make sure we don't trigger the `hit` signal more than once.  However, changing the property in the midst of an `area_entered` signal will result in an error, because the engine hasn't finished processing the current frame yet.
 
 Instead, you can _defer_ the change, which will tell the game engine to wait until it's safe to set monitoring to `false`. Change the line to this:
 ```
