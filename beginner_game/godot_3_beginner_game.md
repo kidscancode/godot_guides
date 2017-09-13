@@ -202,30 +202,30 @@ The Mob scene will use the following nodes:
 `Mob (RigidBody2D)`
     - `AnimatedSprite`
     - `CollisionShape2D`
-    - `Visible (VisibilityNotifier2D)`
+    - `Visibility (VisibilityNotifier2D)`
 
-In the `RigidBody2D` settings, set `Gravity Scale` to `0` (so that the mob will not fall downward). In addition, under `PhysicsBody2D`, click the `Mask` property and uncheck the first box.  This will ensure that the mobs do not collide with each other.
+In the `RigidBody2D` properties, set `Gravity Scale` to `0` (so that the mob will not fall downward). In addition, under `PhysicsBody2D`, click the `Mask` property and uncheck the first box.  This will ensure that the mobs do not collide with each other.
 
 ![Mob Collision Mask](img/set_collision_mask.png)
 
-Set up the AnimatedSprite like you did for the player. This time, we have 3 animations: "fly", "swim", and "walk". Don't forget to adjust the "Speed (FPS)" setting.  We'll select one of these randomly so that the mobs will have some variety.
+Set up the AnimatedSprite like you did for the player. This time, we have 3 animations: "fly", "swim", and "walk". Don't forget to adjust the "Speed (FPS)" setting as shown below.  We'll select one of these randomly so that the mobs will have some variety.
 
 ![Mob Animations](img/mob_animations.gif)
 
-Again, add a `CapsuleShape2D` for the Collision and then save the scene and attach a script.
+As in the `Player` scene, add a `CapsuleShape2D` for the `Collision` and then save the scene and attach a script.
 
 #### Enemy Script
 
-Add the following member variables:
+Add a script to the `Enemy` and add the following member variables:
 ```
 extends RigidBody2D
 
-var MIN_SPEED = 150
-var MAX_SPEED = 250
+var MIN_SPEED = 150  # minimum speed range
+var MAX_SPEED = 250  # maximum speed range
 var mob_types = ["walk", "swim", "fly"]
 ```
 
-`MIN_SPEED` and `MAX_SPEED` set the limits for how fast the mobs can go - it would be boring if they were all moving at the same speed.
+We'll pick a random value between `MIN_SPEED` and `MAX_SPEED` for how fast each mob will move - it would be boring if they were all moving at the same speed.  We also have an array of the names of the three animations, which we'll use to select a random one.
 
 Now let's look at the rest of the script.  In `_ready()` we choose a random one of the three animation types:
 
@@ -235,9 +235,9 @@ func _ready():
 ```
 
 >   **A Note on Randomization**
->   You must use `randomize()` if you want your sequence of "random" numbers to be different every time you run the scene. `randi() % n` is the standard way to get a random integer between `0` and `n-1`.
+>   You must use `randomize()` if you want your sequence of "random" numbers to be different every time you run the scene. We're going to use `randomize()` in our `Main` scene, so we won't need it here.  `randi() % n` is the standard way to get a random integer between `0` and `n-1`.
 
-The last piece is to make the mobs delete themselves when they leave the screen. Connect the `screen_exited()` signal of the `VisibilityNotifier2D` and add this code:
+The last piece is to make the mobs delete themselves when they leave the screen. Connect the `screen_exited()` signal of the `Visibility` node and add this code:
 
 ```
 func _on_Visible_screen_exited():
