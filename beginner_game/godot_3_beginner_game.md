@@ -475,7 +475,7 @@ Finally, add this to `_on_ScoreTimer_timeout()` to keep the display in sync with
 ```
 
 ## Finishing Up
-We've now completed all the functionality for our game. Follow the remaining steps to add a bit more "juice" and improve the game experience.
+We've now completed all the functionality for our game. Below are some remaining steps to add a bit more "juice" and improve the game experience. Feel free to expand the gameplay with your own ideas.
 
 #### Background
 The default gray background is not very appealing, so let's change its color. One way to do this is to use a `ColorRect` node.  Make it the first node under `Main` so that it will be drawn behind the other nodes. `ColorRect` only has one property: `Color`. Choose a color you like and drag the size of the `ColorRect` so that it covers the screen.
@@ -487,14 +487,20 @@ Sound and music can be the single most effective way to add appeal to the game e
 
 Add two `AudioStreamPlayer` nodes as children of `Main`. Name one of them `Music` and the other `DeathSound`. On each one, click on the `Stream` property, select "Load" and choose the corresponding audio file.
 
-To play the music, just add `$Music.play()` in the `new_game()` function and `$Music.stop()` in the `game_over()` function.
+To play the music, add `$Music.play()` in the `new_game()` function and `$Music.stop()` in the `game_over()` function.
 
 Finally, add `$DeathSound.play()` in the `game_over()` function as well.
 
 #### Particles
-For one last bit of visual appeal, let's add a trail effect to the player's movement. Choose your `Player` scene and add a `Particles2D` node.
+For one last bit of visual appeal, let's add a trail effect to the player's movement. Choose your `Player` scene and add a `Particles2D` node named `Trail`.
 
-**!IMAGES OF P2D SETTINGS!**
+There are a very large number of properties to choose from when configuring particles. Feel free to experiment and create different effects. For the effect` in the example, use the following settings:
+
+![Particles2D Settings](img/particle_trail_settings.png)
+
+You also need to create a `Material` by clicking on `<null>` and then "New ParticlesMaterial".  The settings for that are below:
+
+![Particles2D Settings](img/particle_trail_settings2.png)
 
 
-You're all done! Congratulations, you now have a fully functional game. Feel free to add your own features and extras.
+See the **!LINK TO PARTICLES2D GUIDE!** for more details on using particle effects.
