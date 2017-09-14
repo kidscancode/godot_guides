@@ -200,10 +200,10 @@ We will build this into a `Mob` scene, which we can then _instance_ to create an
 
 The Mob scene will use the following nodes:
 
-`Mob (RigidBody2D)`
-    - `AnimatedSprite`
-    - `CollisionShape2D`
-    - `Visibility (VisibilityNotifier2D)`
+-   `Mob (RigidBody2D)`
+    -   `AnimatedSprite`
+    -   `CollisionShape2D`
+    -   `Visibility (VisibilityNotifier2D)`
 
 In the `RigidBody2D` properties, set `Gravity Scale` to `0` (so that the mob will not fall downward). In addition, under `PhysicsBody2D`, click the `Mask` property and uncheck the first box.  This will ensure that the mobs do not collide with each other.
 
@@ -505,3 +505,7 @@ You also need to create a `Material` by clicking on `<null>` and then "New Parti
 
 
 See the **!LINK TO PARTICLES2D GUIDE!** for more details on using particle effects.
+
+## Project Files
+
+You can find a completed version of this project here: <https://github.com/kidscancode/Godot3_dodge/releases>
