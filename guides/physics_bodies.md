@@ -2,17 +2,24 @@
 
 ## Overview
 
-Godot offers a variety of _physics bodies_ to choose from. Choosing the right body type for your object can be confusing. In this guide, we'll explore the pros and cons of each and help you
+Godot offers a variety of "collision objects" to choose from. Depending on your game's design, you might need Choosing which one to use can be confusing. In this guide, we'll explore the pros and cons of each to help you make the right choice for your object.
+
+As you read this guide, refer to the following table as a quick summary of how the various objects are differentiated:
 
 |.|moved by engine|moved by code|
 |--|--|--|
-|Physics during movement|RigidBody|KinematicBody|
-|No physics during movement|StaticBody|Area|
+|**Physics during movement**|`RigidBody2D`|`KinematicBody2D`|
+|**No physics during movement**|`StaticBody2D`|`Area2D`|
 
-
+> **Note:** While 2D objects are listed here, the same principles apply to the equivalent 3D (`Spatial`) nodes.
+ 
 ## CollisionObject2D
 
-`CollisionObject2D` is the root node for all of the bodies discussed here. This node can hold any number of `Shape2D` objects as children, which are used to define the body's collision bounds. Your can also use `CollisionShape2D` or `CollisionPolygon2D` to draw the shape directly in the Godot scene editor.
+`CollisionObject2D` is the root node for all of the bodies discussed here. These nodes can hold any number of `Shape2D` objects as children, which are used to define the object's collision bounds. 
+
+### Collision shapes
+
+In order for these objects to detect collisions and/or contacts, they must have at least one `Shape2D` assigned. The most common way to do this is by adding a `CollisionShape2D` or `CollisionPolygon2D` as a child to draw the shape directly in the Godot scene editor.
 
 ### Area2D
 
@@ -22,11 +29,11 @@ Common uses include detecting "enter" and "exit" events for other shapes and bod
 
 ## PhysicsBody2D
 
-The remaining three body types derive from the `PhysicsBody2D`, an abstract base class. You will never access this class directly, only choose one of the three body types below.
+The remaining three body types derive from `PhysicsBody2D`, an abstract base class. You will never access this class directly, only choose one of the three body types below.
 
 ### StaticBody2D
 
-A static body is a simple body that is intended to remain stationary relative to the game world.
+A static body is a body that is intended to remain stationary relative to the game world.
 
 ### KinematicBody2D
 
@@ -34,4 +41,4 @@ A static body is a simple body that is intended to remain stationary relative to
 
 ### RigidBody2D
 
-This is the node that implements full 2D physics. This means that you do not control a `RigidBody2D` directly. Forces can be applied to it (gravity, impulses), and the physics simulation will calculate the resulting collision, bouncing, rotating, etc.
+This is the node that implements full 2D physics. This means that you do not control a `RigidBody2D` directly. Forces can be applied to it (gravity, impulses), and the physics simulation will calculate the resulting movement, collision, bouncing, rotating, etc.
