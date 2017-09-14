@@ -63,6 +63,7 @@ When you're finished, your `Player` scene should look like this:
 #### Moving the Player
 
 Now we need to add some functionality that we can't get from a built-in node, so we'll add a script. Click the `Player` node and click the "Add Script" button:
+
 ![Add Script Button](img/add_script_button.png)
 
 In the script settings window, you can leave the default settings, just click "Create":
