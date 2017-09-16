@@ -1,5 +1,5 @@
-Your First Game (2D)
-====================
+Your First Game
+===============
 
 Overview
 --------
@@ -8,10 +8,12 @@ This tutorial will guide you through making your first Godot Engine
 project. You will learn how the Godot Engine editor works, how a project
 is structured, and how to build a 2D game.
 
-    **Who is this for?** This project is intended to introduce the Godot
+    **Who is this for?** 
+    
+    This project is intended to introduce the Godot
     Engine. It is assumed that you have some programming experience
     already. If you're new to programming entirely, it is recommended
-    you start with !\ **LINK FOR BEGINNER PROGRAMMERS**!
+    you start with :ref:`doc_scripting-adding_a_script`.
 
 The game is called *"Dodge the Creeps"*. Your character must move and
 avoid the enemies for as long as possible. Here is a preview of the
@@ -20,9 +22,9 @@ final result:
 .. figure:: img/dodge_preview.gif
    :alt: Preview
 
-   Preview
-
-    **Why 2D?** Beginners are urged to focus on 2D projects until they
+    **Why 2D?** 
+    
+    Beginners are urged to focus on 2D projects until they
     have a good understanding of the game development process. 3D games
     are significantly more complex, so stick to 2D until you feel
     confident in your ability.
@@ -31,7 +33,7 @@ Project Setup
 -------------
 
 Start by launching Godot and making a new project. Then, download the
-**!LINK TO ASSETS!** *game assets* - the images and sounds you'll be
+:download:`dodge_assets.zip </files/dodge_assets.zip>` - the images and sounds you'll be
 using. Unzip these files in your new project folder.
 
     For this tutorial, we will assume you are already familiar with the
@@ -64,7 +66,6 @@ node to the scene.
 .. figure:: img/add_node.png
    :alt: Add a Node
 
-   Add a Node
 
 We are using ``Area2D`` so that we can detect other objects overlapping
 (i.e. running into) the player. This first node will represent the
@@ -73,7 +74,9 @@ the player to add functionality.
 
 Save the scene (click Scene -> Save, or press ``Meta-s``).
 
-    **A Note on Naming** In this project, we will be following the Godot
+    **A Note on Naming**
+    
+    In this project, we will be following the Godot
     Engine naming conventions. Classes (Nodes) use ``CapWords``,
     variables and functions use ``snake_case``, and constants use
     ``ALL_CAPS``.
@@ -93,7 +96,6 @@ list of the animation(s) it can display. To create one, find the
 .. figure:: img/spriteframes_window.png
    :alt: SpriteFrames Window
 
-   SpriteFrames Window
 
 On the left is a list of animations. Click the "default" one and rename
 it to "right". Then click the "Add" button to create a second animation
@@ -103,7 +105,6 @@ Frames" side of the window:
 .. figure:: img/spriteframes_window2.png
    :alt: SpriteFrames Window 2
 
-   SpriteFrames Window 2
 
 Finally, add a ``CollisionShape2D`` as a child of the ``Player``. This
 will determine the player's "hitbox" (the bounds of its collision area).
@@ -114,8 +115,6 @@ Resize the shape to cover the sprite:
 .. figure:: img/player_coll_shape.png
    :alt: Player Collision
 
-   Player Collision
-
     **Tip:** Remember not to scale the shape's outline! Only use the
     size handles (red) to adjust the shape!
 
@@ -123,8 +122,6 @@ When you're finished, your ``Player`` scene should look like this:
 
 .. figure:: img/player_scene_nodes.png
    :alt: Player Scene
-
-   Player Scene
 
 Moving the Player
 ~~~~~~~~~~~~~~~~~
@@ -136,13 +133,11 @@ node, so we'll add a script. Click the ``Player`` node and click the
 .. figure:: img/add_script_button.png
    :alt: Add Script Button
 
-   Add Script Button
-
 In the script settings window, you can leave the default settings, just
 click "Create": |Attach Script Window|
 
     If this is your first time encountering GDScript please read the
-    **!LINK TO GDSCRIPT OVERVIEW!** first.
+    :ref:`doc_scripting-adding_a_script` first.
 
 Start by declaring the member variables this object will need:
 
@@ -267,8 +262,6 @@ the Inspector to see the list of signals the player can emit:
 .. figure:: img/player_signals.png
    :alt: Player Signals
 
-   Player Signals
-
 Notice our custom "hit" signal is there as well! Since our enemies are
 going to be ``RigidBody2D`` nodes, we want the
 ``body_entered( Object body )`` signal - that will be emitted when a
@@ -277,7 +270,7 @@ the "Connecting Signal" window - we don't need to change any of those
 settings. Godot will automatically create a function called
 ``_on_Player_body_entered`` in your player's script.
 
-    **TIP:** When connecting a signal, instead of having Godot create a
+    **Tip:** When connecting a signal, instead of having Godot create a
     function for you, you can also name an existing function that you
     want to link the signal to.
 
@@ -290,7 +283,9 @@ Add this code to the function:
         emit_signal("hit")
         monitoring = false
 
-**!NOTE ABOUT MONITORING!** Disabling the ``monitoring`` property of an
+**!NOTE ABOUT MONITORING!** 
+
+Disabling the ``monitoring`` property of an
 ``Area2D`` means it won't detect collisions. By turning it off, we make
 sure we don't trigger the ``hit`` signal more than once. However,
 changing the property in the midst of an ``area_entered`` signal will
@@ -331,8 +326,11 @@ Node Setup
 
 The Mob scene will use the following nodes:
 
-``Mob (RigidBody2D)`` - ``AnimatedSprite`` - ``CollisionShape2D`` -
-``Visibility (VisibilityNotifier2D)``
+-  ``Mob (RigidBody2D)``
+
+   -  ``AnimatedSprite``
+   -  ``CollisionShape2D``
+   -  ``Visibility (VisibilityNotifier2D)``
 
 In the ``RigidBody2D`` properties, set ``Gravity Scale`` to ``0`` (so
 that the mob will not fall downward). In addition, under
@@ -443,16 +441,12 @@ you will see some new buttons appear at the top of the editor:
 .. figure:: img/path2d_buttons.png
    :alt: Instance a Scene
 
-   Instance a Scene
-
 Select the middle one ("Add Point") and draw the path by clicking to add
 the points shown. **Important:** draw the path in *clockwise* order, or
 your mobs will spawn pointing *outwards* instead of *inwards*!
 
 .. figure:: img/draw_path2d.png
    :alt: Instance a Scene
-
-   Instance a Scene
 
 Now that the path is defined, add a ``PathFollow2D`` node as a child of
 ``MobPath`` and name it ``MobSpawnLocation``. This node will
@@ -481,8 +475,6 @@ like so:
 
 .. figure:: img/load_mob_scene.png
    :alt: Load a PackedScene
-
-   Load a PackedScene
 
 Click on ``<null>`` and choose "Load", then select ``Mob.tscn``.
 
@@ -781,6 +773,12 @@ then "New ParticlesMaterial". The settings for that are below:
 
 See the **!LINK TO PARTICLES2D GUIDE!** for more details on using
 particle effects.
+
+Project Files
+-------------
+
+You can find a completed version of this project here:
+https://github.com/kidscancode/Godot3_dodge/releases
 
 .. |Attach Script Window| image:: img/attach_node_window.png
 .. |Setting Anchor| image:: img/ui_anchor.png

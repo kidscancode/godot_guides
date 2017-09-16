@@ -1,4 +1,4 @@
-# Your First Game (2D)
+# Your First Game
 
 ## Overview
 
@@ -162,7 +162,7 @@ This defines a custom signal called "hit" that we will have our player emit (sen
 
 Notice our custom "hit" signal is there as well! Since our enemies are going to be `RigidBody2D` nodes, we want the `body_entered( Object body )` signal - that will be emitted when a body contacts the player.  Click "Connect.." and then "Connect" again on the "Connecting Signal" window - we don't need to change any of those settings.  Godot will automatically create a function called `_on_Player_body_entered` in your player's script.
 
->   **TIP:** When connecting a signal, instead of having Godot create a function for you, you can also name an existing function that you want to link the signal to.
+>   **Tip:** When connecting a signal, instead of having Godot create a function for you, you can also name an existing function that you want to link the signal to.
 
 Add this code to the function:
 
