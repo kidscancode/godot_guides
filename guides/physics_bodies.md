@@ -55,9 +55,9 @@ When moving a `KinematicBody2D`, you cannot set its `position` directly.  Instea
 
 After a KinematicBody2D has collided, it is common to calculate some kind of _collision response_. You may want the body to bounce, to slide along a wall, or to alter the properties of the object it hit. The way you handle collision response depends on which method you used to move the KinematicBody2D.
 
-When using `move_and_collide`, the function will return a `KinematicCollision2D` object, which contains information about the collision and the colliding body.
+When using `move_and_collide`, the function will return a [KinematicCollision2D] object, which contains information about the collision and the colliding body.  You can use this information to determine the response.
 
-Example:
+For example, if you want to the point in space where the collision occurred:
 ```
 func _physics_process(delta):
     var collision_info = move_and_collide(velocity * delta)
@@ -68,3 +68,47 @@ func _physics_process(delta):
 ### RigidBody2D
 
 This is the node that implements full 2D physics. This means that you do not control a `RigidBody2D` directly. Instead you can apply forces to it (gravity, impulses, etc.), and the physics simulation will calculate the resulting movement, collision, bouncing, rotating, etc.
+
+A RigidBody's behavior is controlled by properties such as "Mass", "Friction", or "Bounce", which can be set in the Inspector:
+
+![RigidBody2D Properties](img/rigidbody_properties.png)
+
+The body's behavior can be affected by the world, via the `Project Settings -> Physics` properties, or by an [Area2D] which is overriding the global physics properties.
+
+#### RigidBody Modes
+
+A RigidBody can be set to one of four modes:
+
+-   **Rigid** - The body behaves as a physical object, colliding with other bodies, and responds to forces applied to it. This is the default mode.
+-   **Static** - In this mode, the body behaves like a [StaticBody2D] and does not move.
+-   **Character** - Similar to `Rigid` mode, but the body can not rotate.
+-   **Kinematic** - The body behaves like a [KinematicBody2D], and must be moved by code.
+
+#### Using RigidBody2D
+
+One of the benefits of using a rigid body is that a lot of behavior can be gotten without writing any code. For example, if you were making an "Angry Birds"-style game with falling blocks, you would only need to create RigidBody2Ds and adjust their properties.
+
+However, if you do wish to have some control over the body, you can use should take care - altering the `position` or `linear_velocity` can result in unexpected behavior. If you need to use the `_integrate_forces()` callback.
+
+For example, here is the code for an "Asteroids" style ship:
+
+```
+extends RigidBody2D
+
+var thrust = Vector2(0, 250)
+var torque = 20000
+
+func _integrate_forces(state):
+    if Input.is_action_pressed("ui_up"):
+        set_applied_force(thrust.rotated(rotation))
+    else:
+        set_applied_force(Vector2())
+    var rotation_dir = 0
+    if Input.is_action_pressed("ui_right"):
+        rotation_dir += 1
+    if Input.is_action_pressed("ui_left"):
+        rotation_dir -= 1
+    set_applied_torque(rotation_dir * torque)
+```
+
+Notice that we are not setting the `linear_velocity` or `angular_velocity` properties directly, but rather applying forces (`thrust` and `torque`) to the body, and letting the physics engine calculate the resulting movement.
